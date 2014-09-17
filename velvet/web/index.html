@@ -1,0 +1,195 @@
+<html>
+<style type="text/css" media="screen">
+    #editorxml, #editorjs { 
+        /* position: absolute; */
+		width: 100%;
+		height: 250px;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+	
+	body
+	{
+		font-family : "Trebuchet MS", Helvetica, sans-serif;
+		color: white;
+		background-color: #333333;
+	}
+	
+	.button-enabled
+	{
+		font-family: inherit;
+		border-radius: 2px;
+		padding: 0.5em 1em;
+		color: rgba(0,0,0, 0.8);
+		border: none rgba(0,0,0,0);
+	}
+	
+	.button-enabled::-moz-focus-inner, .button-disabled::-moz-focus-inner
+	{
+		padding: 0;
+		border: 0;
+	}
+	
+	.button-enabled:focus, .button-enabled:hover
+	{
+		background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+	}
+	
+	.button-enabled:focus
+	{
+		outline: 0;
+	}
+	
+	.button-enabled:active
+	{
+		box-shadow: 0 0 0 1px rgba(0,0,0, 0.15) inset, 0 0 6px rgba(0,255,0, 0.50) inset;
+	}
+	
+	.button-disabled, .button-disabled:focus, .button-disabled:hover, .button-disabled:active
+	{
+		font-family: inherit;
+		border-radius: 2px;
+		padding: 0.5em 1em;
+		border: none rgba(0,0,0,0);
+		opacity: 0.4;
+		color: rgba(0,0,0, 0.8);
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+	
+	::-webkit-scrollbar
+	{
+		width: 10px;
+		border-radius: 10px;
+		background-color: rgba(0,0,0,0);
+		background: rgba(125, 125, 125, 1);
+	}
+	
+	::-webkit-scrollbar-track
+	{
+		-webkit-box-shadow: inset 0 0 6px rgba(50, 50, 50, 1); 
+		border-radius: 10px;
+	}
+	
+	::-webkit-scrollbar-thumb
+	{
+		background: #DDDDDD;
+		border-radius: 10px;
+		width: 10px;
+	}
+</style>
+<body>
+XML <br>
+<div id="editorxml" class="default">
+<component>
+</component>
+</div> <br><br>
+JavaScript <br>
+<div id="editorjs">
+</div> <br><br>
+
+<button id="submit" type="button" class="button-enabled">Submit</button>
+</body>
+
+<script src="../lib/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/xmlvalidation.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/xmlparser.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/jsvalidation.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/requirements.js" type="text/javascript" charset="utf-8"></script>
+<script src="../lib/VELVET/esprima-master/esprima.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+
+	var ValidationStatus = { xml: true, js: true };
+	var defaultXML = "\
+<component>\n\n\
+	<icon>http://satin.codemill.se:81/compicons/TriggerButton.png</icon>\n\n\
+	<previewImage>http://satin.codemill.se:81/compicons/35454379-3815-4e95-ba2c-c7828b530044.png</previewImage>\n\n\
+	<name>NewComponent</name>\n\n\
+	<info><![CDATA[<!-- Write description here -->]]></info>\n\n\
+	<config>\n\
+	</config>\n\n\
+	<requires>\n\
+	</requires>\n\n\
+	<provides>\n\
+	</provides>\n\n\
+	<interface>\n\
+		<![CDATA[\n\
+			<!-- User interfaces (GUI) in HTML here -->\n\
+		]]>\n\
+	</interface>\n\n\
+	<code_ext>\n\
+		<!-- External Javascript components goes here -->\n\
+		<!-- External components requires a suffix of .extern.js -->\n\
+	</code_ext>\n\n\
+	<apis>\n\
+		<![CDATA[\n\
+			<!-- External javascript files can be included here -->\n\
+		]]>\n\
+	</apis>\n\n\
+</component>";
+
+	var defaultJS = "\
+function make_NewComponent (id, env) \n\
+{\n\
+	var button = document.getElementById(id);\n\
+	button.setAttribute(\"value\", label);\n\
+	button.onclick = function() { env.trigger() };\n\
+}\n\
+	";
+	
+	// get submit button
+	var submit = document.getElementById("submit");
+	
+	// setup XML editor
+	var xmleditor = ace.edit("editorxml");
+	xmleditor.setValue(defaultXML, -1);
+    xmleditor.setTheme("ace/theme/monokai");
+    xmleditor.getSession().setMode("ace/mode/xml");
+	xmleditor.getSession().setUseWorker(false);
+	var xmlsession = xmleditor.getSession();
+	
+	// setup JS editor
+	var jseditor = ace.edit("editorjs");
+	jseditor.setValue(defaultJS, -1);
+    jseditor.setTheme("ace/theme/monokai");
+    jseditor.getSession().setMode("ace/mode/javascript");
+	jseditor.getSession().setUseWorker(false);
+	var jssession = jseditor.getSession();
+	
+	// setup XML validation
+	var xmlvalidationfunction = function() 
+	{
+		// setup requirements struct
+		var requirements = new Requirements();
+	
+		xmlsession.removeListener('change', xmlvalidationfunction);
+		xmlsession.clearAnnotations();
+		jssession.clearAnnotations();
+		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
+		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
+		xmlsession.on('change', xmlvalidationfunction);
+		ValidateComponent(ValidationStatus, submit);
+	}
+	xmlsession.on('change', xmlvalidationfunction);
+	
+	// setup JS validation
+	var jsvalidationfunction = function()
+	{
+		// setup requirements struct
+		var requirements = new Requirements();
+	
+		jssession.removeListener('change', jsvalidationfunction);
+		jssession.clearAnnotations();
+		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
+		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
+		jssession.on('change', jsvalidationfunction);
+		ValidateComponent(ValidationStatus, submit);
+	}
+	jssession.on('change', jsvalidationfunction);
+	
+</script>
+</html>
