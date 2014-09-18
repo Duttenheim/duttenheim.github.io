@@ -20,11 +20,11 @@ function ValidateJS(contents, session, editor, requirements)
 					if (symbol.params.length == requirements.config.length + 2)
 					{
 						// yay, we have the right amount of params, check for names
-						for (var i = 0; i < symbol.params.length-2; i++)
+						for (var j = 0; j < symbol.params.length-2; j++)
 						{
-							if (symbol.params[i].name != requirements.config[i])
+							if (symbol.params[j].name != requirements.config[j])
 							{
-								VELVET_Error({row: symbol.loc.start.line-1}, editor, "Function '" + symbol.id.name + "' input parameter names must match XML config parameters, got '" + symbol.params[i].name + "' but expected '" + requirements.config[i] + "'");
+								VELVET_Error({row: symbol.loc.start.line-1}, editor, "Function '" + symbol.id.name + "' input parameter names must match XML config parameters, got '" + symbol.params[j].name + "' but expected '" + requirements.config[j] + "'");
 								return false;
 							}
 						}
@@ -47,7 +47,7 @@ function ValidateJS(contents, session, editor, requirements)
 		
 		if (!makeFound)
 		{
-			VELVET_Error({row: 0}, editor, "Function '" + requirements.makeName + "' could not be found!");					
+			VELVET_Error({row: 0}, editor, "Function 'make_" + requirements.makeName + "' could not be found!");					
 			return false;
 		}
 	}

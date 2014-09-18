@@ -1,95 +1,24 @@
 <html>
-<style type="text/css" media="screen">
-    #editorxml, #editorjs { 
-        /* position: absolute; */
-		width: 100%;
-		height: 250px;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-    }
-	
-	body
-	{
-		font-family : "Trebuchet MS", Helvetica, sans-serif;
-		color: white;
-		background-color: #333333;
-	}
-	
-	.button-enabled
-	{
-		font-family: inherit;
-		border-radius: 2px;
-		padding: 0.5em 1em;
-		color: rgba(0,0,0, 0.8);
-		border: none rgba(0,0,0,0);
-	}
-	
-	.button-enabled::-moz-focus-inner, .button-disabled::-moz-focus-inner
-	{
-		padding: 0;
-		border: 0;
-	}
-	
-	.button-enabled:focus, .button-enabled:hover
-	{
-		background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
-	}
-	
-	.button-enabled:focus
-	{
-		outline: 0;
-	}
-	
-	.button-enabled:active
-	{
-		box-shadow: 0 0 0 1px rgba(0,0,0, 0.15) inset, 0 0 6px rgba(0,255,0, 0.50) inset;
-	}
-	
-	.button-disabled, .button-disabled:focus, .button-disabled:hover, .button-disabled:active
-	{
-		font-family: inherit;
-		border-radius: 2px;
-		padding: 0.5em 1em;
-		border: none rgba(0,0,0,0);
-		opacity: 0.4;
-		color: rgba(0,0,0, 0.8);
-		cursor: not-allowed;
-		box-shadow: none;
-	}
-	
-	::-webkit-scrollbar
-	{
-		width: 10px;
-		border-radius: 10px;
-		background-color: rgba(0,0,0,0);
-		background: rgba(125, 125, 125, 1);
-	}
-	
-	::-webkit-scrollbar-track
-	{
-		-webkit-box-shadow: inset 0 0 6px rgba(50, 50, 50, 1); 
-		border-radius: 10px;
-	}
-	
-	::-webkit-scrollbar-thumb
-	{
-		background: #DDDDDD;
-		border-radius: 10px;
-		width: 10px;
-	}
+<head>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
 </style>
 <body>
 XML <br>
 <div id="editorxml" class="default">
-<component>
-</component>
 </div> <br><br>
 JavaScript <br>
-<div id="editorjs">
+<div id="editorjs" class="default">
 </div> <br><br>
+UI <br>
+<div id="ui" class="ui-frame">
+</div><br>
 
+<hr>
+Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
+
+<br>
 <button id="submit" type="button" class="button-enabled">Submit</button>
 </body>
 
@@ -144,6 +73,13 @@ function make_NewComponent (id, env) \n\
 	// get submit button
 	var submit = document.getElementById("submit");
 	
+	// get ui div
+	var ui = document.getElementById("ui");
+	
+	// get status labels
+	var xml_status = document.getElementById("xml-status");
+	var js_status = document.getElementById("js-status");
+	
 	// setup XML editor
 	var xmleditor = ace.edit("editorxml");
 	xmleditor.setValue(defaultXML, -1);
@@ -172,7 +108,8 @@ function make_NewComponent (id, env) \n\
 		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
 		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
 		xmlsession.on('change', xmlvalidationfunction);
-		ValidateComponent(ValidationStatus, submit);
+		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
+		ui.innerHTML = requirements.interfaces;
 	}
 	xmlsession.on('change', xmlvalidationfunction);
 	
@@ -187,7 +124,8 @@ function make_NewComponent (id, env) \n\
 		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
 		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
 		jssession.on('change', jsvalidationfunction);
-		ValidateComponent(ValidationStatus, submit);
+		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
+		ui.innerHTML = requirements.interfaces;
 	}
 	jssession.on('change', jsvalidationfunction);
 	

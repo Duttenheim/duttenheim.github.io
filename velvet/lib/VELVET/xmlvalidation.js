@@ -94,6 +94,7 @@ function ValidateXML(contents, session, editor, requirements)
 		{
 			if (bits & XMLTagBits.Interface) { VELVET_Warning(elem, editor, "<interface> already defined, ignoring this for the previous definition", null); continue; }
 			// accept everything
+			requirements.interfaces = elem.cdata;
 			bits |= XMLTagBits.Interface;
 		}
 		else if (elem.tagName == "config")

@@ -91,15 +91,21 @@ XMLParser.prototype.ParseRow = function()
 		
 		if (row.beginsWith("</"))
 		{			
+			// make sure we are not still in an unclosed node
+			if (this.parseState.state == ParseStates.Node)
+			{
+				this.error = "Node is not properly closed with a finishing '>', current node is '<" + this.currentNode.tagName + "' but should be '<" + this.currentNode.tagName + ">'";
+				return;
+			}
+			
 			// cut close tag
 			row = row.slice(2);
 			
 			// get closing tag name and closing bracket
-			var name = row.match(/[A-z]*\s*>/g);
-			var textname = name[0].slice(0, name[0].length-1);
-			if (textname != this.currentNode.tagName)
+			var name = row.match(/[A-z]*\s*/g)[0];
+			if (name != this.currentNode.tagName)
 			{
-				this.error = "Node is not properly closed, should be </" + this.currentNode.tagName + "> but got </" + textname + ">";
+				this.error = "Node is not properly closed, should be '</" + this.currentNode.tagName + ">' but got '</" + name + ">'";
 				return;
 			}
 			else
@@ -108,7 +114,14 @@ XMLParser.prototype.ParseRow = function()
 			}
 			
 			// remove tag name
-			row = row.slice(name[0].length);
+			row = row.slice(name.length);
+			
+			// get closing tag
+			if (row.charAt(0) != ">")
+			{
+				this.error = "Node is not properly closed, missing '>'";
+				return;
+			}
 			
 			// close node
 			this.CloseNode();
@@ -119,6 +132,13 @@ XMLParser.prototype.ParseRow = function()
 			{
 				if (row.beginsWith("<"))
 				{
+					// make sure we are not still in an unclosed node
+					if (this.parseState.state == ParseStates.Node)
+					{
+						this.error = "Node is not properly closed with a finishing '>', current node is '<" + this.currentNode.tagName + ">'";
+						return;
+					}
+			
 					// open new node
 					this.OpenNode();
 					
@@ -126,13 +146,13 @@ XMLParser.prototype.ParseRow = function()
 					row = row.slice(1);
 					
 					// find tag name
-					var name = row.match(/[A-z]*/g);
+					var name = row.match(/[A-z]*/g)[0];
 					if (name != null)
 					{					
-						this.currentNode.tagName = name[0];
+						this.currentNode.tagName = name;
 					
 						// remove tag name
-						row = row.slice(name[0].length);
+						row = row.slice(name.length);
 					}
 					else
 					{
@@ -143,6 +163,13 @@ XMLParser.prototype.ParseRow = function()
 			}
 			else
 			{
+				// make sure we are not still in an unclosed node
+				if (this.parseState.state == ParseStates.Node)
+				{
+					this.error = "Node is not properly closed with a finishing '>', current node is '<" + this.currentNode.tagName + ">'";
+					return;
+				}
+			
 				var cdata = "<![CDATA[";
 				var comment = "<!--";
 				if (row.beginsWith(cdata))

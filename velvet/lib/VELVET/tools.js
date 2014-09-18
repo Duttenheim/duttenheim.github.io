@@ -52,24 +52,28 @@ function VELVET_Warning(received, editor, msg)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateComponent(status, button)
+function ValidateComponent(status, button, xml_status, js_status)
 {
 	if (!status.xml)
 	{
-		console.log("XML is broken!");
+		xml_status.innerHTML = "XML contains errors";
+		xml_status.className = "p-error";
 	}
 	else
 	{
-		console.log("XML is fine");
+		xml_status.innerHTML = "XML OK";
+		xml_status.className = "p-ok";
 	}
 	
 	if (!status.js)
 	{
-		console.log("JS is broken!");
+		js_status.innerHTML = "JavaScript contains errors";
+		js_status.className = "p-error";
 	}
 	else
 	{
-		console.log("JS is fine");
+		js_status.innerHTML = "JavaScript OK";
+		js_status.className = "p-ok";
 	}
 	
 	if (status.xml & status.js)
