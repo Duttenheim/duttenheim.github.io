@@ -106,13 +106,13 @@ function ValidateXML(contents, session, editor, requirements)
 		else if (elem.tagName == "requires")
 		{
 			if (bits & XMLTagBits.Requires) { VELVET_Warning(elem, editor, "<requires> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateRequires(elem, session, editor)) return false;
+			if (!ValidateRequires(elem, session, editor, requirements)) return false;
 			bits |= XMLTagBits.Requires;
 		}
 		else if (elem.tagName == "provides")
 		{
 			if (bits & XMLTagBits.Provides) { VELVET_Warning(elem, editor, "<provides> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateProvides(elem, session, editor)) return false;
+			if (!ValidateProvides(elem, session, editor, requirements)) return false;
 			bits |= XMLTagBits.Provides;
 		}
 		else if (elem.tagName == "code_ext")
@@ -303,14 +303,15 @@ function ValidateParam(element, session, editor, requirements)
 	}
 	
 	// add to configure
-	requirements.config.push(name);
+	if(isNaN(defval)) defval = "\"" + defval + "\"";
+	requirements.config.push({name: name, def: defval});
 	return true;
 }
 
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateRequires(element, session, editor)
+function ValidateRequires(element, session, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -323,7 +324,7 @@ function ValidateRequires(element, session, editor)
 		}
 		else
 		{
-			if (!ValidatePort(elem, session, editor)) return false;
+			if (!ValidatePort(elem, session, editor, requirements)) return false;
 		}
 	}
 	return true;
@@ -332,7 +333,7 @@ function ValidateRequires(element, session, editor)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateProvides(element, session, editor)
+function ValidateProvides(element, session, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -345,7 +346,7 @@ function ValidateProvides(element, session, editor)
 		}
 		else
 		{
-			if (!ValidatePort(elem, session, editor)) return false;
+			if (!ValidatePort(elem, session, editor, requirements)) return false;
 		}
 	}
 	return true;
@@ -359,7 +360,7 @@ var types = ['Bool', 'Int', 'String', 'Char', 'Float'];
 	TODO:
 	 Somehow get all the custom types in the SATIN environment and make sure our ports conform to any of those types.
 */
-function ValidatePort(element, session, editor)
+function ValidatePort(element, session, editor, requirements)
 {	
 	var kind = element.GetAttribute("kind");
 	var name = element.GetAttribute("name");
@@ -444,6 +445,9 @@ function ValidatePort(element, session, editor)
 	{
 		if (!ValidateSuppliesExpects(elements[i], kind, session, editor)) return false;
 	}
+	
+	// add to requirements
+	requirements.ports.push({name: name});
 	
 	return true;
 }

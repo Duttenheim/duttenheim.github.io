@@ -7,4 +7,5 @@ function Requirements()
 	this.makeName = "";
 	this.config = [];	// config should be a list of parameter names
 	this.interfaces = "";
+	this.ports = [];
 } 

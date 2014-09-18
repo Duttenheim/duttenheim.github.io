@@ -3,14 +3,15 @@
 <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
-</style>
 <body>
 XML <br>
 <div id="editorxml" class="default">
 </div> <br><br>
 JavaScript <br>
 <div id="editorjs" class="default">
-</div> <br><br>
+</div>
+<p id="javascript-runtime-status" class="p-error">
+</p> <br>
 UI <br>
 <div id="ui" class="ui-frame">
 </div><br>
@@ -31,7 +32,6 @@ Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok
 <script src="../lib/VELVET/esprima-master/esprima.js" type="text/javascript" charset="utf-8"></script>
 
 <script>
-
 	var ValidationStatus = { xml: true, js: true };
 	var defaultXML = "\
 <component>\n\n\
@@ -47,7 +47,7 @@ Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok
 	</provides>\n\n\
 	<interface>\n\
 		<![CDATA[\n\
-			<!-- User interfaces (GUI) in HTML here -->\n\
+			<!-- Put HTML UI here -->\n\
 		]]>\n\
 	</interface>\n\n\
 	<code_ext>\n\
@@ -80,6 +80,9 @@ function make_NewComponent (id, env) \n\
 	var xml_status = document.getElementById("xml-status");
 	var js_status = document.getElementById("js-status");
 	
+	// get javascript runtime label
+	var js_runtime_status = document.getElementById("javascript-runtime-status");
+	
 	// setup XML editor
 	var xmleditor = ace.edit("editorxml");
 	xmleditor.setValue(defaultXML, -1);
@@ -106,10 +109,11 @@ function make_NewComponent (id, env) \n\
 		xmlsession.clearAnnotations();
 		jssession.clearAnnotations();
 		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
+		ui.innerHTML = requirements.interfaces;
 		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
 		xmlsession.on('change', xmlvalidationfunction);
 		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
-		ui.innerHTML = requirements.interfaces;
+		js_runtime_status.innerHTML = "";
 	}
 	xmlsession.on('change', xmlvalidationfunction);
 	
@@ -125,9 +129,19 @@ function make_NewComponent (id, env) \n\
 		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
 		jssession.on('change', jsvalidationfunction);
 		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
-		ui.innerHTML = requirements.interfaces;
+		js_runtime_status.innerHTML = "";
 	}
 	jssession.on('change', jsvalidationfunction);
+	
+		
+	// handle general javascript errors
+	window.onerror = function(msg, url, line, column, error)
+	{
+		var message = error.stack.replace("\n", "<br>");
+		message = message.replace(/ /g, '\u00a0');
+		js_runtime_status.innerHTML = message;
+		VELVET_Error({row: line-1}, jseditor, "Runtime error caused by UI", null);
+	}
 	
 </script>
 </html>

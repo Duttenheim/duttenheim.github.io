@@ -22,9 +22,9 @@ function ValidateJS(contents, session, editor, requirements)
 						// yay, we have the right amount of params, check for names
 						for (var j = 0; j < symbol.params.length-2; j++)
 						{
-							if (symbol.params[j].name != requirements.config[j])
+							if (symbol.params[j].name != requirements.config[j].name)
 							{
-								VELVET_Error({row: symbol.loc.start.line-1}, editor, "Function '" + symbol.id.name + "' input parameter names must match XML config parameters, got '" + symbol.params[j].name + "' but expected '" + requirements.config[j] + "'");
+								VELVET_Error({row: symbol.loc.start.line-1}, editor, "Function '" + symbol.id.name + "' input parameter names must match XML config parameters, got '" + symbol.params[j].name + "' but expected '" + requirements.config[j].name + "'");
 								return false;
 							}
 						}
@@ -50,9 +50,27 @@ function ValidateJS(contents, session, editor, requirements)
 			VELVET_Error({row: 0}, editor, "Function 'make_" + requirements.makeName + "' could not be found!");					
 			return false;
 		}
+		var call = "var env = {";
+		var i = 0;
+		for (; i < requirements.ports.length; i++)
+		{
+			call += " " + requirements.ports[i].name + ":function(){}, ";
+		}
+		call += "};";
+		
+		call += "\n\n make_" + requirements.makeName + "(";
+		for (i = 0; i < requirements.config.length; i++)
+		{
+			if (i > 0) call += ", ";
+			call += requirements.config[i].def;
+		}
+		if (i > 0) call += ", ";
+		call += "\"" + requirements.makeName + "\", env);";
+		eval(contents + "\n" + call);
 	}
 	catch (err)
 	{
+		if (err.lineNumber === undefined) err.lineNumber = 1;
 		var annots = session.getAnnotations();
 		var annot = {row: err.lineNumber-1, col: 0, text: "Syntax: " + err.message, type:"error"};
 		if (annots != null)
