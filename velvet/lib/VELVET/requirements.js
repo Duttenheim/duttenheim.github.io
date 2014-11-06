@@ -8,4 +8,6 @@ function Requirements()
 	this.config = [];	// config should be a list of parameter names
 	this.interfaces = "";
 	this.ports = [];
+	this.apis = [];		// is a list of script sources pre-parsed
+	this.id = "";
 } 

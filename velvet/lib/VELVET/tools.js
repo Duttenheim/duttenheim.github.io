@@ -3,50 +3,39 @@
 	Validates string in editor, puts an annotation in the editor if no correction string is provided.
 	Otherwise corrects the string to the 'correctTo' value, this ensures syntax correctness.
 */
-function VELVET_Error(received, editor, msg, correctTo)
+function VELVET_Error(row, editor, msg)
 {
-	if (correctTo != null)
+	var session = editor.getSession();
+	var annots = session.getAnnotations();
+	var annot = {row: row, col: 0, text: "Error: " + msg, type:"error"};
+	if (annots != null)
 	{
-		var pos = editor.getCursorPosition();
-		var selection = editor.getSelection();
-		
-		editor.find(received, {start: {row: pos.row-1, column: 0}}, true);
-		editor.replace(correctTo);
+		annots.push(annot);
+		session.setAnnotations(annots);
 	}
 	else
-	{		
-		var session = editor.getSession();
-		var annots = session.getAnnotations();
-		var annot = {row: received.row, col: 0, text: "Semantic: " + msg, type:"error"};
-		if (annots != null)
-		{
-			annots.push(annot);
-			session.setAnnotations(annots);
-		}
-		else
-		{
-			session.setAnnotations([annot]);
-		}
+	{
+		session.setAnnotations([annot]);
 	}
 }
 
 //----------------------------------------------------------------------------
 /**
 */
-function VELVET_Warning(received, editor, msg)
+function VELVET_Warning(row, editor, msg)
 {		
-		var session = editor.getSession();
-		var annots = session.getAnnotations();
-		var annot = {row: received.row, col: 0, text: "Semantic: " + msg, type:"warning"};
-		if (annots != null)
-		{
-			annots.push(annot);
-			session.setAnnotations(annots);
-		}
-		else
-		{
-			session.setAnnotations([annot]);
-		}
+	var session = editor.getSession();
+	var annots = session.getAnnotations();
+	var annot = {row: row, col: 0, text: "Warning: " + msg, type:"warning"};
+	if (annots != null)
+	{
+		annots.push(annot);
+		session.setAnnotations(annots);
+	}
+	else
+	{
+		session.setAnnotations([annot]);
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -96,10 +85,9 @@ function ValidateTypeValue(type, value)
 {
 	if (type == "Bool")
 	{
-		if (defval != "True" && defval != "False")
+		if (value != "true" && value != "false")
 		{
 			return "default value must be either 'True' or 'False' for Bool";
-
 		}
 	}
 	else if (type == "Int" || type == "Float")
@@ -111,7 +99,7 @@ function ValidateTypeValue(type, value)
 	}
 	else
 	{
-		// everything is fine as a string
+		// everything is fine as a string or custom type
 		return null;
 	}
 }
@@ -147,9 +135,5 @@ String.prototype.beginsWith = function(pattern)
 */
 String.prototype.isLowerCase = function()
 {
-	for (var i = 0; i < this.length; i++)
-	{
-		if (this.charAt(i) == this.charAt(i).toUpperCase()) return false;
-	}
-	return true;
+	return (this.toLowerCase() == this);	
 }

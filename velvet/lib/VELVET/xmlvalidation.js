@@ -19,40 +19,33 @@ var XMLTagBits =
 /**
 	Main function for XML validation
 */
-function ValidateXML(contents, session, editor, requirements)
+function ValidateXML(contents, editor, requirements)
 {
 	// reset requirements
 	requirements.config = [];
 
-	// parse entire text as XML document
-	parser = new DOMParser();
-	xml = parser.parseFromString(contents, "text/xml");
-	
+	// parse using custom XML parser
 	xmlparser = new XMLParser();
 	xmlparser.Parse(contents);
 	
 	// first check for XML errors
 	if (xmlparser.error != null)
 	{
-		var annots = session.getAnnotations();
-		var annot = {row: xmlparser.errorRow, col: 0, text: "Syntax: " + xmlparser.error, type:"error"};
-		if (annots != null)
-		{
-			annots.push(annot);
-			session.setAnnotations(annots);
-		}
-		else
-		{
-			session.setAnnotations([annot]);
-		}
+		VELVET_Error(xmlparser.errorRow, editor, "Syntax: " + xmlparser.error);
 		return false;
 	}
 		
 	// first, check if the first element is <component>
 	var root = xmlparser.rootNode;
+	if (root == null)
+	{
+		VELVET_Error(0, editor, "Component XML cannot be empty");
+		return false;
+	}
+	
 	if (root.tagName != "component")
 	{
-		VELVET_Error(root, editor, "Component must start with <component>", null);
+		VELVET_Error(root.row, editor, "Component must start with <component>");
 		return false;
 	}
 	
@@ -64,19 +57,19 @@ function ValidateXML(contents, session, editor, requirements)
 		var elem = elements[i];
 		if (elem.tagName == "icon")
 		{
-			if (bits & XMLTagBits.Icon) { VELVET_Warning(elem, editor, "<icon> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateIcon(elem, session, editor)) return false;
+			if (bits & XMLTagBits.Icon) { VELVET_Warning(elem.row, editor, "<icon> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidateIcon(elem, editor)) return false;
 			bits |= XMLTagBits.Icon;
 		}
 		else if (elem.tagName == "previewImage")
 		{
-			if (bits & XMLTagBits.Preview) { VELVET_Warning(elem, editor, "<previewImage> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidatePreviewImage(elem, session, editor)) return false;
+			if (bits & XMLTagBits.Preview) { VELVET_Warning(elem.row, editor, "<previewImage> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidatePreviewImage(elem, editor)) return false;
 			bits |= XMLTagBits.Preview;
 		}
 		else if (elem.tagName == "name")
 		{
-			if (bits & XMLTagBits.Name) { VELVET_Warning(elem, editor, "<name> already defined, ignoring this for the previous definition", null); continue; }
+			if (bits & XMLTagBits.Name) { VELVET_Warning(elem.row, editor, "<name> already defined, ignoring this for the previous definition"); continue; }
 			
 			// set name in requirements
 			requirements.makeName = elem.content;
@@ -86,44 +79,119 @@ function ValidateXML(contents, session, editor, requirements)
 		}
 		else if (elem.tagName == "info")
 		{
-			if (bits & XMLTagBits.Info) { VELVET_Warning(elem, editor, "<info> already defined, ignoring this for the previous definition", null); continue; }
+			if (bits & XMLTagBits.Info) { VELVET_Warning(elem.row, editor, "<info> already defined, ignoring this for the previous definition"); continue; }
 			// -||-
 			bits |= XMLTagBits.Info;
 		}
 		else if (elem.tagName == "interface")
 		{
-			if (bits & XMLTagBits.Interface) { VELVET_Warning(elem, editor, "<interface> already defined, ignoring this for the previous definition", null); continue; }
-			// accept everything
+			if (bits & XMLTagBits.Interface) { VELVET_Warning(elem.row, editor, "<interface> already defined, ignoring this for the previous definition"); continue; }
+			
+			// run interface stuff through XML parser, if we have any errors in the HTML, the parser will detect them
+			var interfaceparser = new XMLParser();
+			interfaceparser.Parse("<interface-root>" + elem.cdata + "</interface-root>");
+			
+			// check if we got errors
+			if (interfaceparser.error != null)
+			{
+				VELVET_Error(elem.cdataStartRow + interfaceparser.errorRow, editor, interfaceparser.error);
+				return false;
+			}
+			
+			// validate interface
+			var interface_root = interfaceparser.rootNode;
+			
+			// get children if there are any
+			var elements = interface_root.children;
+			if (elements.length > 1)
+			{
+				VELVET_Error(elem.cdataStartRow + elements[0].row, editor, "<interface> may only declare one tag as the root element");
+				return false;
+			}
+			else if (elements.length == 1)
+			{
+				var root = elements[0];
+				var id = root.GetAttribute("id");
+				if (id == null)
+				{
+					VELVET_Error(elem.cdataStartRow + root.row, editor, "Root interface element must define attribute 'id'");
+					return false;
+				}
+				else
+				{
+					// all cool and dandy, set id in requirements
+					requirements.id = id;
+				}
+			}
+			else
+			{
+				// add automatic placeholder div
+				elem.cdata = "<div id='PlaceholderDiv'>" + elem.cdata + "</div>";
+				requirements.id = "PlaceholderDiv"; 
+			}
+			
 			requirements.interfaces = elem.cdata;
 			bits |= XMLTagBits.Interface;
 		}
 		else if (elem.tagName == "config")
 		{
-			if (bits & XMLTagBits.Config) { VELVET_Warning(elem, editor, "<config> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateConfig(elem, session, editor, requirements)) return false;
+			if (bits & XMLTagBits.Config) { VELVET_Warning(elem.row, editor, "<config> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidateConfig(elem, editor, requirements)) return false;
 			bits |= XMLTagBits.Config;
 		}
 		else if (elem.tagName == "requires")
 		{
-			if (bits & XMLTagBits.Requires) { VELVET_Warning(elem, editor, "<requires> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateRequires(elem, session, editor, requirements)) return false;
+			if (bits & XMLTagBits.Requires) { VELVET_Warning(elem.row, editor, "<requires> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidateRequires(elem, editor, requirements)) return false;
 			bits |= XMLTagBits.Requires;
 		}
 		else if (elem.tagName == "provides")
 		{
-			if (bits & XMLTagBits.Provides) { VELVET_Warning(elem, editor, "<provides> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateProvides(elem, session, editor, requirements)) return false;
+			if (bits & XMLTagBits.Provides) { VELVET_Warning(elem.row, editor, "<provides> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidateProvides(elem, editor, requirements)) return false;
 			bits |= XMLTagBits.Provides;
 		}
 		else if (elem.tagName == "code_ext")
 		{
-			if (bits & XMLTagBits.CodeExt) { VELVET_Warning(elem, editor, "<code_ext> already defined, ignoring this for the previous definition", null); continue; }
-			if (!ValidateCodeExt(elem, session, editor)) return false;
+			if (bits & XMLTagBits.CodeExt) { VELVET_Warning(elem.row, editor, "<code_ext> already defined, ignoring this for the previous definition"); continue; }
+			if (!ValidateCodeExt(elem, editor)) return false;
 			bits |= XMLTagBits.CodeExt;
 		}
 		else if (elem.tagName == "apis")
 		{
-			if (bits & XMLTagBits.APIs) { VELVET_Warning(elem, editor, "<apis> already defined, ignoring this for the previous definition", null); continue; }
+			if (bits & XMLTagBits.APIs) { VELVET_Warning(elem.row, editor, "<apis> already defined, ignoring this for the previous definition"); continue; }
+			
+			var apiparser = new XMLParser();
+			apiparser.Parse("<include-root>" + elem.cdata + "</include-root>");
+			
+			// check if we got errors
+			if (apiparser.error != null)
+			{
+				VELVET_Error(elem.cdataStartRow + apiparser.errorRow, editor, apiparser.error);
+				return false;
+			}
+			
+			// get include header
+			var header = apiparser.rootNode;
+			var apielems = header.children;
+			for (var j = 0; j < apielems.length; j++)
+			{
+				var apielem = apielems[j];
+				if (apielem.tagName == "script")
+				{
+					var src = apielem.GetAttribute("src");
+					if (src == null)
+					{
+						VELVET_Error(elem.row + apielem.row, editor, "<script> tag must define attribute 'src'. If the script doesn't need an external source, just put the JavaScript code here.");
+						return false;
+					}
+					else
+					{
+						requirements.apis.push(src);
+					}
+				}
+			}
+			
 			// accept everything
 			bits |= XMLTagBits.APIs;
 		}
@@ -132,31 +200,31 @@ function ValidateXML(contents, session, editor, requirements)
 	// check if all required tags are used
 	if (!(bits & XMLTagBits.Name))
 	{
-		VELVET_Error(root, editor, "<name> tag is required", null);
+		VELVET_Error(root.row, editor, "<name> tag is required");
 		return false;
 	}
 	
 	if (!(bits & XMLTagBits.Icon))
 	{
-		VELVET_Error(root, editor, "<icon> tag is required", null);
+		VELVET_Error(root.row, editor, "<icon> tag is required");
 		return false;
 	}
 	
-	if (!(bits & XMLTagBits.Preview))
+	if (!(bits & XMLTagBits.Preview) && (bits & XMLTagBits.Interface))
 	{
-		VELVET_Error(root, editor, "<previewImage> tag is required", null);
+		VELVET_Error(root.row, editor, "<previewImage> tag is required");
 		return false;
 	}
 	
 	if (!(bits & XMLTagBits.Info))
 	{
-		VELVET_Error(root, editor, "<info> tag is required", null);
+		VELVET_Error(root.row, editor, "<info> tag is required");
 		return false;
 	}
 	
 	if (!(bits & XMLTagBits.Config))
 	{
-		VELVET_Error(root, editor, "<config> tag is required", null);
+		VELVET_Error(root.row, editor, "<config> tag is required");
 		return false;
 	}
 	
@@ -167,7 +235,7 @@ function ValidateXML(contents, session, editor, requirements)
 /**
 	Validates <icon> tag, basically check if the icon is available
 */
-function ValidateIcon(element, session, editor)
+function ValidateIcon(element, editor)
 {
 	var img = document.body.appendChild(document.createElement("img"));
     img.onload = function()
@@ -176,7 +244,7 @@ function ValidateIcon(element, session, editor)
     };
     img.onerror = function()
     {
-		VELVET_Warning(element, editor, "Could not get icon image");
+		VELVET_Warning(element.row, editor, "Could not get icon image");
 		document.body.removeChild(img);
     };
     img.src = element.content;
@@ -186,7 +254,7 @@ function ValidateIcon(element, session, editor)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidatePreviewImage(element, session, editor)
+function ValidatePreviewImage(element, editor)
 {
 	var img = document.body.appendChild(document.createElement("img"));
     img.onload = function()
@@ -195,7 +263,7 @@ function ValidatePreviewImage(element, session, editor)
     };
     img.onerror = function()
     {
-		VELVET_Warning(element, editor, "Could not get preview image");
+		VELVET_Warning(element.row, editor, "Could not get preview image");
 		document.body.removeChild(img);
     };
     img.src = element.content;
@@ -205,7 +273,7 @@ function ValidatePreviewImage(element, session, editor)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateConfig(element, session, editor, requirements)
+function ValidateConfig(element, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -213,12 +281,12 @@ function ValidateConfig(element, session, editor, requirements)
 		var elem = elements[i];
 		if (elem.tagName != "param")
 		{
-			VELVET_Error(elem, editor, "<config> only allows subtags as <param>", null);
+			VELVET_Error(elem.row, editor, "<config> only allows subtags as <param>");
 			return false;
 		}
 		else
 		{
-			if (!ValidateParam(elem, session, editor, requirements)) return false;
+			if (!ValidateParam(elem, editor, requirements)) return false;
 		}
 	}
 	return true;
@@ -227,7 +295,7 @@ function ValidateConfig(element, session, editor, requirements)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateParam(element, session, editor, requirements)
+function ValidateParam(element, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -235,12 +303,12 @@ function ValidateParam(element, session, editor, requirements)
 		var elem = elements[i];
 		if (elem.tagName != "description")
 		{
-			VELVET_Error(elem, editor, "<param> only allows a <description> tag", null);
+			VELVET_Error(elem.row, editor, "<param> only allows a <description> tag");
 			return false;
 		}
 		else if (i > 0)
 		{
-			VELVET_Error(elem, editor, "<param> only allows a single <description tag>", null);
+			VELVET_Error(elem.row, editor, "<param> only allows a single <description tag>");
 			return false;		
 		}
 		else
@@ -248,7 +316,7 @@ function ValidateParam(element, session, editor, requirements)
 			var elems = elem.children;
 			if (elems.length > 0)
 			{
-				VELVET_VELVET_Error(elem, editor, "<description> allows no children, forgot to lose it maybe?", null);
+				VELVET_VELVET_Error(elem, editor, "<description> allows no children, forgot to close it maybe?");
 				return false;
 			}
 		}
@@ -260,7 +328,7 @@ function ValidateParam(element, session, editor, requirements)
 	
 	if (name == null)
 	{
-		VELVET_Error(element, editor, "<param> must contain attribute 'name'");
+		VELVET_Error(element.row, editor, "<param> must contain attribute 'name'");
 		return false;
 	}
 	else
@@ -268,28 +336,28 @@ function ValidateParam(element, session, editor, requirements)
 		var firstchar = name.substring(0, 1);
 		if (firstchar == firstchar.toUpperCase())
 		{
-			VELVET_Error(element, editor, "<param> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'", null);
+			VELVET_Error(element.row, editor, "<param> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'");
 			return false;
 		}
 	}
 	
 	if (type == null)
 	{
-		VELVET_Error(element, editor, "<param> must contain attribute 'type'", null);
+		VELVET_Error(element.row, editor, "<param> must contain attribute 'type'");
 		return false;		
 	}
 	else
 	{
 		if (type != "Bool" && type != "Int" && type != "String" && type != "Float")
 		{
-			VELVET_Error(element, editor, "<param> must use a defined type (Bool, Int, String, Float)", null);
+			VELVET_Error(element.row, editor, "<param> must use a defined type (Bool, Int, String, Float)");
 			return false;		
 		}
 	}
 	
 	if (defval == null)
 	{
-		VELVET_Error(element, editor, "<param> must contain attribute 'default'", null);
+		VELVET_Error(element.row, editor, "<param> must contain attribute 'default'");
 		return false;		
 	}
 	else
@@ -297,13 +365,13 @@ function ValidateParam(element, session, editor, requirements)
 		var message = ValidateTypeValue(type, defval);
 		if (message != null)
 		{
-			VELVET_Error(element, editor, "<param> " + message, null);
+			VELVET_Error(element.row, editor, "<param> " + message);
 			return false;		
 		}
 	}
 	
 	// add to configure
-	if(isNaN(defval)) defval = "\"" + defval + "\"";
+	if (type == "String") defval = "\"" + defval + "\"";
 	requirements.config.push({name: name, def: defval});
 	return true;
 }
@@ -311,7 +379,7 @@ function ValidateParam(element, session, editor, requirements)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateRequires(element, session, editor, requirements)
+function ValidateRequires(element, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -319,12 +387,12 @@ function ValidateRequires(element, session, editor, requirements)
 		var elem = elements[i];
 		if (elem.tagName != "port")
 		{
-			VELVET_Error(elem, editor, "<requires> only allows subtags as <port>", null);
+			VELVET_Error(elem.row, editor, "<requires> only allows subtags as <port>");
 			return false;
 		}
 		else
 		{
-			if (!ValidatePort(elem, session, editor, requirements)) return false;
+			if (!ValidatePort(elem, editor, requirements)) return false;
 		}
 	}
 	return true;
@@ -333,7 +401,7 @@ function ValidateRequires(element, session, editor, requirements)
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateProvides(element, session, editor, requirements)
+function ValidateProvides(element, editor, requirements)
 {
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
@@ -341,12 +409,12 @@ function ValidateProvides(element, session, editor, requirements)
 		var elem = elements[i];
 		if (elem.tagName != "port")
 		{
-			VELVET_Error(elem, editor, "<provides> only allows subtags as <port>", null);
+			VELVET_Error(elem.row, editor, "<provides> only allows subtags as <port>");
 			return false;
 		}
 		else
 		{
-			if (!ValidatePort(elem, session, editor, requirements)) return false;
+			if (!ValidatePort(elem, editor, requirements)) return false;
 		}
 	}
 	return true;
@@ -354,13 +422,13 @@ function ValidateProvides(element, session, editor, requirements)
 
 
 var invalidwords = " abort action after array before case class data default deriving do else elsif forall if import instance in let module new of private raise request result send struct then self typeclass uniarray use where ";
-var types = ['Bool', 'Int', 'String', 'Char', 'Float'];
+var SATIN_Types = ['Bool', 'Int', 'String', 'Char', 'Float', '[Bool]', '[Int]', '[String]', '[Char]', '[Float]'];
 //----------------------------------------------------------------------------
 /**
 	TODO:
 	 Somehow get all the custom types in the SATIN environment and make sure our ports conform to any of those types.
 */
-function ValidatePort(element, session, editor, requirements)
+function ValidatePort(element, editor, requirements)
 {	
 	var kind = element.GetAttribute("kind");
 	var name = element.GetAttribute("name");
@@ -370,7 +438,7 @@ function ValidatePort(element, session, editor, requirements)
 	// validate the kind of port
 	if (kind == null)
 	{
-		VELVET_Error(element, editor, "<port> must have attribute 'kind' (push, pull)", null);
+		VELVET_Error(element.row, editor, "<port> must have attribute 'kind' (push, pull)");
 		return false;
 	}
 	else
@@ -379,39 +447,39 @@ function ValidatePort(element, session, editor, requirements)
 		{
 			if (resulttype != null)
 			{
-				VELVET_Warning(element, editor, "<port> of type 'push' have no use of 'resulttype', did you mean to use 'argtype'?", null);
+				VELVET_Warning(element.row, editor, "<port> of type 'push' have no use of 'resulttype', did you mean to use 'argtype'?");
 			}
 			else if (argtype != null)
 			{
-				if (!ValidateType(argtype, types))
+				if (!ValidateType(argtype, SATIN_Types))
 				{
-					VELVET_Error(element, editor, "<port> '" + argtype + "' does not name a defined type", null);
+					VELVET_Error(element.row, editor, "<port> '" + argtype + "' does not name a defined type");
 					return false;
 				}
 			}
 			else
 			{
-				VELVET_Error(element, editor, "<port> 'argtype' is not defined", null);
-				return false;
+				// not a bug, it is okay to not define an argtype for PUSH-ports
+				VELVET_Warning(element.row, editor, "<port> 'argtype' is not defined");
 			}
 		}
 		else if (kind.toUpperCase() == "PULL")
 		{
 			if (argtype != null)
 			{
-				VELVET_Warning(element, editor, "<port> of type 'pull' have no use of 'argtype', did you mean to use 'resulttype'?", null);
+				VELVET_Warning(element.row, editor, "<port> of type 'pull' have no use of 'argtype', did you mean to use 'resulttype'?");
 			}
 			else if (resulttype != null)
 			{
-				if (!ValidateType(resulttype, types))
+				if (!ValidateType(resulttype, SATIN_Types))
 				{
-					VELVET_Error(element, editor, "<port> '" + resulttype + "' does not name a defined type", null);
+					VELVET_Error(element.row, editor, "<port> '" + resulttype + "' does not name a defined type");
 					return false;
 				}
 			}
 			else
 			{
-				VELVET_Error(element, editor, "<port> 'resulttype' is not defined", null);
+				VELVET_Error(element.row, editor, "<port> 'resulttype' is not defined");
 				return false;
 			}
 		}
@@ -420,21 +488,21 @@ function ValidatePort(element, session, editor, requirements)
 	// validate name
 	if (name == null)
 	{
-		VELVET_Error(element, editor, "<port> must have attribute 'name'", null);
+		VELVET_Error(element.row, editor, "<port> must have attribute 'name'");
 		return false;
 	}
 	else
 	{
 		if (!name.isLowerCase())
 		{
-			VELVET_Error(element, editor, "<port> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'", null);
+			VELVET_Error(element.row, editor, "<port> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'");
 			return false;
 		}
 		
 		var index = invalidwords.indexOf(" " + name + " ");
 		if (index > -1)
 		{
-			VELVET_Error(element, editor, "<port> name'" + name + "' is not allowed since it's a reserved keyword", null);
+			VELVET_Error(element, editor, "<port> name'" + name + "' is not allowed since it's a reserved keyword");
 			return false;
 		}
 	}
@@ -443,7 +511,25 @@ function ValidatePort(element, session, editor, requirements)
 	var elements = element.children;
 	for (var i = 0; i < elements.length; i++)
 	{
-		if (!ValidateSuppliesExpects(elements[i], kind, session, editor)) return false;
+		var element = elements[i];
+		if (element.tagName == "supplies")
+		{
+			if (!Port_ValidateSupplies(element, kind, editor)) return false;
+		}
+		else if (element.tagName == "requires")
+		{
+			if (!Port_ValidateRequires(element, kind, editor)) return false;
+		}
+		else if (element.tagName == "description")
+		{
+			continue;	// just accept
+		}
+		else
+		{
+			VELVET_Error(element.row, editor, "<port> only accepts <requires> or <supplies> and <description> as subtags");
+			return false;
+		}
+		
 	}
 	
 	// add to requirements
@@ -452,110 +538,109 @@ function ValidatePort(element, session, editor, requirements)
 	return true;
 }
 
+
 //----------------------------------------------------------------------------
 /**
 */
-function ValidateSuppliesExpects(element, kind, session, editor)
+function Port_ValidateRequires(element, kind, editor)
 {
-	if (kind.toUpperCase() == "PUSH")
+	if (kind.toUpperCase() == "PULL")
 	{
-		if (element.tagName == "supplies")
+		var type = element.GetAttribute("type");
+		var name = element.GetAttribute("name");
+		if (type != null)
 		{
-			var type = element.GetAttribute("type");
-			var name = element.GetAttribute("name");
-			if (type != null)
+			if (!ValidateType(type, SATIN_Types))
 			{
-				if (!ValidateType(type, types))
-				{
-					VELVET_Error(element, editor, "'" + type + "' is not a valid type", null);
-					return false;
-				}
-			}
-			else
-			{
-				VELVET_Error(element, editor, "<supplies> must provide a type", null);
+				VELVET_Error(element.row, editor, "'" + type + "' is not a valid type");
 				return false;
-			}
-			
-			// validate name
-			if (name == null)
-			{
-				VELVET_Error(element, editor, "<supplies> must provide a name", null);
-				return false;
-			}
-			else
-			{
-				var index = invalidwords.indexOf(" " + name + " ");
-				if (index > -1)
-				{
-					VELVET_Error(element, editor, "<supplies> name'" + name + "' is not allowed since it's a reserved keyword", null);
-					return false;
-				}
-				
-				if (!name.isLowerCase())
-				{
-					VELVET_Error(element, editor, "<supplies> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'", null);
-					return false;
-				}
 			}
 		}
 		else
 		{
-			VELVET_Error(element, editor, "Push port only allows subtags of type <supplies>", null);
+			VELVET_Error(element.row, editor, "<expects> must provide a type");
 			return false;
 		}
-	}
-	else if (kind.toUpperCase() == "PULL")
-	{
-		if (element.tagName == "expects")
+		
+		// validate name
+		if (name == null)
 		{
-			var type = element.GetAttribute("type");
-			var name = element.GetAttribute("name");
-			if (type != null)
-			{
-				if (!ValidateType(type, types))
-				{
-					VELVET_Error(element, editor, "'" + type + "' is not a valid type", null);
-					return false;
-				}
-			}
-			else
-			{
-				VELVET_Error(element, editor, "<expects> must provide a type", null);
-				return false;
-			}
-			
-			// validate name
-			if (name == null)
-			{
-				VELVET_Error(element, editor, "<expects> must provide a name", null);
-				return false;
-			}
-			else
-			{
-				var index = invalidwords.indexOf(" " + name + " ");
-				if (index > -1)
-				{
-					VELVET_Error(element, editor, "<expects> name'" + name + "' is not allowed since it's a reserved keyword", null);
-					return false;
-				}
-				
-				if (!name.isLowerCase())
-				{
-					VELVET_Error(element, editor, "<expects> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'", null);
-					return false;
-				}
-			}
+			VELVET_Error(element.row, editor, "<expects> must provide a name");
+			return false;
 		}
 		else
 		{
-			VELVET_Error(element, editor, "Pull port only allows subtags of type <expects>", null);
-			return false;
+			var index = invalidwords.indexOf(" " + name + " ");
+			if (index > -1)
+			{
+				VELVET_Error(element.row, editor, "<expects> name'" + name + "' is not allowed since it's a reserved keyword");
+				return false;
+			}
+			
+			if (!name.isLowerCase())
+			{
+				VELVET_Error(element.row, editor, "<expects> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'");
+				return false;
+			}
 		}
 	}
 	else
 	{
-		VELVET_Warning(element, editor, "<port> is neither Pull nor Push, this should never happen", null);
+		VELVET_Error(element.row, editor, "Pull port only allows subtags of type <expects>");
+		return false;
+	}
+	return true;
+}
+
+//----------------------------------------------------------------------------
+/**
+*/
+function Port_ValidateSupplies(element, kind, editor)
+{
+	if (kind.toUpperCase() == "PUSH")
+	{
+		var type = element.GetAttribute("type");
+		var name = element.GetAttribute("name");
+		if (type != null)
+		{
+			if (!ValidateType(type, SATIN_Types))
+			{
+				VELVET_Error(element.row, editor, "'" + type + "' is not a valid type");
+				return false;
+			}
+		}
+		else
+		{
+			VELVET_Error(element.row, editor, "<supplies> must provide a type");
+			return false;
+		}
+		
+		// validate name
+		if (name == null)
+		{
+			VELVET_Error(element.row, editor, "<supplies> must provide a name");
+			return false;
+		}
+		else
+		{
+			var index = invalidwords.indexOf(" " + name + " ");
+			if (index > -1)
+			{
+				VELVET_Error(element.row, editor, "<supplies> name'" + name + "' is not allowed since it's a reserved keyword");
+				return false;
+			}
+			
+			if (!name.isLowerCase())
+			{
+				VELVET_Error(element.row, editor, "<supplies> must have the 'name' value completely in lower case, consider using '" + name.toLowerCase() + "'");
+				return false;
+			}
+		}
+	}
+	else
+	{
+		VELVET_Error(element.row, editor, "Push port only allows subtags of type <supplies>");
+		return false;
 	}
 	return true;
 }
@@ -565,7 +650,7 @@ function ValidateSuppliesExpects(element, kind, session, editor)
 	FIXME: How is a reference defined in SATIN?
 	When we know this, run Esprima on the references.
 */
-function ValidateCodeExt(element, session, editor)
+function ValidateCodeExt(element, editor)
 {
 	var text = element.content;
 	

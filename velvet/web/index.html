@@ -30,8 +30,13 @@ Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok
 <script src="../lib/VELVET/jsvalidation.js" type="text/javascript" charset="utf-8"></script>
 <script src="../lib/VELVET/requirements.js" type="text/javascript" charset="utf-8"></script>
 <script src="../lib/VELVET/esprima-master/esprima.js" type="text/javascript" charset="utf-8"></script>
+<script src="http://satin.its.ltu.se/compositions/resources/js/satin.js" type="text/javascript" charset="utf-8"></script>
+<script src="http://satin.its.ltu.se/compositions/resources/js/satinlog.js" type="text/javascript" charset="utf-8"></script>
+<script src="http://code.jquery.com/jquery-1.6.4.min.js" type="text/javascript" charset="utf-8"></script>
 
 <script>
+
+	// define default values in the XML section.
 	var ValidationStatus = { xml: true, js: true };
 	var defaultXML = "\
 <component>\n\n\
@@ -61,6 +66,7 @@ Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok
 	</apis>\n\n\
 </component>";
 
+	// define default values in the JS section.
 	var defaultJS = "\
 function make_NewComponent (id, env) \n\
 {\n\
@@ -83,9 +89,20 @@ function make_NewComponent (id, env) \n\
 	// get javascript runtime label
 	var js_runtime_status = document.getElementById("javascript-runtime-status");
 	
+	// add special SATIN types, replace the following to add custom types to the validator
+	SATIN_Types.push("Contact");
+	SATIN_Types.push("Event");
+	SATIN_Types.push("GPS_Coordinate");
+	SATIN_Types.push("Language");
+	SATIN_Types.push("Millisecond");
+	SATIN_Types.push("Person");
+	SATIN_Types.push("Place");
+	SATIN_Types.push("Smart_Objects");
+	SATIN_Types.push("Text");
+	SATIN_Types.push("Trip");	
+
 	// setup XML editor
 	var xmleditor = ace.edit("editorxml");
-	xmleditor.setValue(defaultXML, -1);
     xmleditor.setTheme("ace/theme/monokai");
     xmleditor.getSession().setMode("ace/mode/xml");
 	xmleditor.getSession().setUseWorker(false);
@@ -93,54 +110,53 @@ function make_NewComponent (id, env) \n\
 	
 	// setup JS editor
 	var jseditor = ace.edit("editorjs");
-	jseditor.setValue(defaultJS, -1);
     jseditor.setTheme("ace/theme/monokai");
     jseditor.getSession().setMode("ace/mode/javascript");
 	jseditor.getSession().setUseWorker(false);
 	var jssession = jseditor.getSession();
 	
 	// setup XML validation
-	var xmlvalidationfunction = function() 
+	var validationCallback = function() 
 	{
 		// setup requirements struct
 		var requirements = new Requirements();
 	
-		xmlsession.removeListener('change', xmlvalidationfunction);
+		// clear old annotations
 		xmlsession.clearAnnotations();
 		jssession.clearAnnotations();
-		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
+		
+		// validate XML
+		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmleditor, requirements);
+		
+		// feed interface div with HTML UI
 		ui.innerHTML = requirements.interfaces;
-		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
-		xmlsession.on('change', xmlvalidationfunction);
+		
+		// validate JavaScript
+		ValidationStatus.js = ValidateJS(jssession.getValue(), jseditor, requirements);
+		
+		// check total validity of component
 		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
 		js_runtime_status.innerHTML = "";
 	}
-	xmlsession.on('change', xmlvalidationfunction);
 	
-	// setup JS validation
-	var jsvalidationfunction = function()
-	{
-		// setup requirements struct
-		var requirements = new Requirements();
+	// attach above function to both editors
+	xmlsession.on('change', validationCallback);
+	jssession.on('change', validationCallback);	
 	
-		jssession.removeListener('change', jsvalidationfunction);
-		jssession.clearAnnotations();
-		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmlsession, xmleditor, requirements);
-		ValidationStatus.js = ValidateJS(jssession.getValue(), jssession, jseditor, requirements);
-		jssession.on('change', jsvalidationfunction);
-		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
-		js_runtime_status.innerHTML = "";
-	}
-	jssession.on('change', jsvalidationfunction);
-	
+	// set default values
+	jseditor.setValue(defaultJS, -1);
+	xmleditor.setValue(defaultXML, -1);
 		
 	// handle general javascript errors
 	window.onerror = function(msg, url, line, column, error)
 	{
-		var message = error.stack.replace("\n", "<br>");
-		message = message.replace(/ /g, '\u00a0');
-		js_runtime_status.innerHTML = message;
-		VELVET_Error({row: line-1}, jseditor, "Runtime error caused by UI", null);
+		if (stack != null)
+		{
+			var message = error.stack.replace("\n", "<br>");
+			message = message.replace(/ /g, '\u00a0');
+			js_runtime_status.innerHTML = message;
+			VELVET_Error(line-1, jseditor, "Runtime error caused by UI");
+		}
 	}
 	
 </script>
