@@ -53,7 +53,7 @@ function VELVET_RuntimeError(msg)
 	Use this function to change the state of the submit button. Send the class name used in the CSS to represent error text and accepted text respectively.
 	Also send the class name used for enabled/disabled buttons respectively
 */
-function ValidateComponent(status, button, xml_status, js_status, error_class, ok_class, button_enabled_class, button_disabled_class)
+function ValidateComponent(status, button, xml_status, js_status, ok_class, error_class, button_enabled_class, button_disabled_class)
 {
 	if (!status.xml)
 	{
@@ -78,16 +78,20 @@ function ValidateComponent(status, button, xml_status, js_status, error_class, o
 		js_status.className = ok_class;
 	}
 	
-	if (status.xml & status.js)
+	if (button != null)
 	{
-		button.className = button_enabled_class;
-		button.disabled = false;
+		if (status.xml & status.js)
+		{
+			button.className = button_enabled_class;
+			button.disabled = false;
+		}
+		else
+		{
+			button.className = button_disabled_class;
+			button.disabled = true;
+		}
 	}
-	else
-	{
-		button.className = button_disabled_class;
-		button.disabled = true;
-	}
+	
 }
 
 //----------------------------------------------------------------------------

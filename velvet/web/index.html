@@ -187,6 +187,8 @@ function make_NewComponent (id, env) \n\
 		{
 			previewWindow.document.body = VELVET_PreviewDocument.body;
 		}		
+		
+		ValidateComponent(ValidationStatus, null, xml_status, js_status, "p-ok", "p-error", "button-enabled", "button-disabled");
 	}
 	
 	// attach above function to both editors
