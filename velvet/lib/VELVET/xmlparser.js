@@ -11,6 +11,7 @@ function XMLParser()
 	this.error = null;
 	this.errorRow = -1;
 	this.parseState;
+	this.acceptAttributeQualifiers = false;
 	
 	this.xmlVersion = "1.0";
 	this.xmlEncoding = "UTF-8";
@@ -380,7 +381,11 @@ XMLParser.prototype.ParseText = function(node)
 	if (this.parseState.state == ParseStates.Node)
 	{
 		// remove any unnecessary whitespace
-		var attrPattern = /^([A-z])([A-z]|[0-9]|\-|\.|\_|\:)*\s*=\s*(\"|\')[^("|')]*(\"|\')/i;
+		var attrPattern;
+		
+		// select attribute type, some HTML elements may use value free attributes 
+		if (this.acceptAttributeQualifiers)		attrPattern = /^([A-z])([A-z]|[0-9]|\-|\.|\_|\:)*(\s*=\s*(\"|\')[^("|')]*(\"|\'))?/i;
+		else									attrPattern = /^([A-z])([A-z]|[0-9]|\-|\.|\_|\:)*\s*=\s*(\"|\')[^("|')]*(\"|\')/i;
 		var attrs = node.match(attrPattern);	
 		if  (attrs != null)
 		{
@@ -388,7 +393,8 @@ XMLParser.prototype.ParseText = function(node)
 			var parts = attrs.split("=");
 			var attribute = new XMLAttribute();
 			attribute.name = parts[0];
-			attribute.value = parts[1].slice(1, parts[1].length-1);
+			if (parts.length > 1) 				attribute.value = parts[1].slice(1, parts[1].length-1);
+			else								attribute.value = null;
 			attribute.row = this.currentRow;
 			this.currentNode.attributes.push(attribute);			
 			node = node.slice(attrs.length);

@@ -4,23 +4,27 @@
 </head>
 
 <body>
-XML <br>
-<div id="editorxml" class="default">
-</div> <br><br>
-JavaScript <br>
-<div id="editorjs" class="default">
+<div>
+	XML <br>
+	<div id="editorxml" class="default"></div> <br><br>
+	
+	JavaScript <br>
+	<div id="editorjs" class="default"></div> <br>
+	<p id="javascript-runtime-status" class="p-error"></p>
 </div>
-<p id="javascript-runtime-status" class="p-error">
-</p> <br>
-UI <br>
-<div id="ui" class="ui-frame">
-</div><br>
-
 <hr>
-Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
+<div style="float:left; width:50%">
+	UI <br>
+	<button id="show-ui" type="button" class="button-enabled">Show UI</button>
+	<br>
+</div>
 
-<br>
-<button id="submit" type="button" class="button-enabled">Submit</button>
+<div style="float:left; width:50%">
+	Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
+
+	<br>
+	<button id="submit" type="button" class="button-enabled">Submit</button>
+</div>
 </body>
 
 <script src="../lib/ace/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -78,9 +82,36 @@ function make_NewComponent (id, env) \n\
 	
 	// get submit button
 	var submit = document.getElementById("submit");
+		
+	// get ui div, hide id directly
+	//var ui = document.getElementById("ui");
 	
-	// get ui div
-	var ui = document.getElementById("ui");
+	// get preview button
+	var previewButton = document.getElementById("show-ui");
+	var previewWindow = null;
+	
+	// create a document which will serve as the placeholder to 'document' when running the javascript code
+	var VELVET_PreviewDocument = document.implementation.createHTMLDocument('');	
+	previewButton.onclick = function() 
+	{	
+		if (previewWindow == null)
+		{
+			// create a new window and set its contents to be from the preview document
+			previewWindow = window.open("", "", "width=512, height=512, location=no, menubar=no, toolbar=no, status=no");
+			previewWindow.onbeforeunload = function() { previewWindow = null; }
+			previewWindow.addEventListener('load', function(){ previewWindow.document.body = VELVET_PreviewDocument.body; }(), true);			
+		}
+		previewWindow.focus();
+	}
+	
+	// make sure to close the popup if the window closes
+	window.onbeforeunload = function() 
+	{
+		if (previewWindow != null)
+		{
+			previewWindow.close();
+		}
+	}
 	
 	// get status labels
 	var xml_status = document.getElementById("xml-status");
@@ -88,6 +119,7 @@ function make_NewComponent (id, env) \n\
 	
 	// get javascript runtime label
 	var js_runtime_status = document.getElementById("javascript-runtime-status");
+	VELVET_RuntimeErrorDiv = js_runtime_status;
 	
 	// add special SATIN types, replace the following to add custom types to the validator
 	SATIN_Types.push("Contact");
@@ -115,11 +147,15 @@ function make_NewComponent (id, env) \n\
 	jseditor.getSession().setUseWorker(false);
 	var jssession = jseditor.getSession();
 	
+	// create requirements, will create a new object each time we validate
+	var requirements;
+	
 	// setup XML validation
 	var validationCallback = function() 
 	{
 		// setup requirements struct
-		var requirements = new Requirements();
+		requirements = new Requirements();
+		js_runtime_status.innerHTML = "";
 	
 		// clear old annotations
 		xmlsession.clearAnnotations();
@@ -129,14 +165,21 @@ function make_NewComponent (id, env) \n\
 		ValidationStatus.xml = ValidateXML(xmlsession.getValue(), xmleditor, requirements);
 		
 		// feed interface div with HTML UI
-		ui.innerHTML = requirements.interfaces;
+		VELVET_PreviewDocument.open();
+		VELVET_PreviewDocument.write(requirements.interfaces);
+		//ui.innerHTML = requirements.interfaces;
 		
 		// validate JavaScript
 		ValidationStatus.js = ValidateJS(jssession.getValue(), jseditor, requirements);
 		
+		// set preview result
+		if (previewWindow != null)
+		{
+			previewWindow.document.body = VELVET_PreviewDocument.body;
+		}
+
 		// check total validity of component
 		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
-		js_runtime_status.innerHTML = "";
 	}
 	
 	// attach above function to both editors
@@ -148,9 +191,10 @@ function make_NewComponent (id, env) \n\
 	xmleditor.setValue(defaultXML, -1);
 		
 	// handle general javascript errors
+	/*
 	window.onerror = function(msg, url, line, column, error)
 	{
-		if (stack != null)
+		if (msg != null)
 		{
 			var message = error.stack.replace("\n", "<br>");
 			message = message.replace(/ /g, '\u00a0');
@@ -158,6 +202,7 @@ function make_NewComponent (id, env) \n\
 			VELVET_Error(line-1, jseditor, "Runtime error caused by UI");
 		}
 	}
+	*/
 	
 </script>
 </html>

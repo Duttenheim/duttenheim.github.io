@@ -3,9 +3,9 @@
 	This function evaluates the JS using the special semantics. 
 	In actuality, it's rather simple, find the make function, count the number of arguments, if they match we are good!
 */
+var VELVET_PreviewDocument = null;
 function ValidateJS(contents, editor, requirements)
-{	
-
+{		
 	// this is the only use of jQuery, simply download all the API libs.
 	for (apiIndex in requirements.apis)
 	{
@@ -65,7 +65,10 @@ function ValidateJS(contents, editor, requirements)
 		}
 		
 		// generate calling code
-		var call = "document.write = function(s) { console.log(\"document.write() produced: '\" + s + \"'\") }\n\n";
+		var preamble = "";
+		var correctedContents = contents.replace(/document./g, "VELVET_PreviewDocument.");
+		//var call = "document.write = function(s) { VELVET_RuntimeError(\"document.write() is not supported by the validator. The result of this function is undefined.\") }\n\n";
+		var call = "";
 		call += "var env = {";
 		var i = 0;
 		for (; i < requirements.ports.length; i++)
@@ -81,8 +84,9 @@ function ValidateJS(contents, editor, requirements)
 			call += requirements.config[i].def;
 		}
 		if (i > 0) call += ", ";
-		call += "\"" + requirements.id + "\", env);";
-		eval(contents + "\n" + call + "\nfor (var func in context) { context[func](); }");
+		call += "\"" + requirements.id + "\", env);\n\n";
+		call += "for (var func in context) { context[func](); }\n";
+		eval(preamble + "\n" + correctedContents + "\n" + call);
 	}
 	catch (err)
 	{
@@ -90,8 +94,8 @@ function ValidateJS(contents, editor, requirements)
 		var message;
 		if (err.lineNumber === undefined) 	line = 1;				// WHY ISN'T THIS STANDARDIZED ALREADY?!?!?!
 		else								line = err.lineNumber;
-		if (err.message === undefined)		message = err;
-		else								message = err.message;
+		if (err.stack === undefined)		message = err;
+		else								message = err.stack;
 		VELVET_Error(line-1, editor, message);
 		return false;
 	}	

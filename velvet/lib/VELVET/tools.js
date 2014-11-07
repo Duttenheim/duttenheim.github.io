@@ -40,6 +40,16 @@ function VELVET_Warning(row, editor, msg)
 
 //----------------------------------------------------------------------------
 /**
+	Report runtime errors. Set the DIV prior to using this function
+*/
+var VELVET_RuntimeErrorDiv;
+function VELVET_RuntimeError(msg)
+{
+	VELVET_RuntimeErrorDiv.innerHTML = msg;
+}
+
+//----------------------------------------------------------------------------
+/**
 */
 function ValidateComponent(status, button, xml_status, js_status)
 {

@@ -89,6 +89,7 @@ function ValidateXML(contents, editor, requirements)
 			
 			// run interface stuff through XML parser, if we have any errors in the HTML, the parser will detect them
 			var interfaceparser = new XMLParser();
+			interfaceparser.acceptAttributeQualifiers = true;
 			interfaceparser.Parse("<interface-root>" + elem.cdata + "</interface-root>");
 			
 			// check if we got errors
@@ -110,11 +111,11 @@ function ValidateXML(contents, editor, requirements)
 			}
 			else if (elements.length == 1)
 			{
-				var root = elements[0];
-				var id = root.GetAttribute("id");
+				var interfaceRoot = elements[0];
+				var id = interfaceRoot.GetAttribute("id");
 				if (id == null)
 				{
-					VELVET_Error(elem.cdataStartRow + root.row, editor, "Root interface element must define attribute 'id'");
+					VELVET_Error(elem.cdataStartRow + interfaceRoot.row, editor, "Root interface element must define attribute 'id'");
 					return false;
 				}
 				else
@@ -212,7 +213,7 @@ function ValidateXML(contents, editor, requirements)
 	
 	if (!(bits & XMLTagBits.Preview) && (bits & XMLTagBits.Interface))
 	{
-		VELVET_Error(root.row, editor, "<previewImage> tag is required");
+		VELVET_Error(root.row, editor, "<previewImage> tag is required if the <interface> is defined");
 		return false;
 	}
 	
