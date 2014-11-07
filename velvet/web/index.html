@@ -4,7 +4,7 @@
 </head>
 
 <body>
-<div>
+<div style="float:left; width:80%">
 	XML <br>
 	<div id="editorxml" class="default"></div> <br><br>
 	
@@ -12,18 +12,17 @@
 	<div id="editorjs" class="default"></div> <br>
 	<p id="javascript-runtime-status" class="p-error"></p>
 </div>
-<hr>
-<div style="float:left; width:50%">
-	UI <br>
-	<button id="show-ui" type="button" class="button-enabled">Show UI</button>
-	<br>
+
+<div style="display:block; overflow:hidden; height:100%">
+	<div align="center" style="margin:0 auto; vertical-align: middle;">
+		UI <br>
+		<button id="show-ui" type="button" class="button-enabled">Show UI</button>
+		<br><br>
+		<b>Status</b> <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
+		<br>
+	</div>
 </div>
 
-<div style="float:left; width:50%">
-	Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
-
-	<br>
-</div>
 </body>
 
 <script src="../lib/ace/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -100,6 +99,7 @@ function make_NewComponent (id, env) \n\
 			previewWindow.onbeforeunload = function() 
 			{ 
 				// hax, but we need to bump the reference count of body by saving it in a local variable and reassigning it to our document
+				// otherwise the window will get an empty document from VELVET_PreviewDocument.body
 				var body = previewWindow.document.body;
 				previewWindow = null; 
 				VELVET_PreviewDocument.body = body;
