@@ -23,7 +23,6 @@
 	Status: <p id="xml-status" class="p-ok">XML OK</p> <p id="js-status" class="p-ok">JavaScript OK</p>
 
 	<br>
-	<button id="submit" type="button" class="button-enabled">Submit</button>
 </div>
 </body>
 
@@ -187,10 +186,7 @@ function make_NewComponent (id, env) \n\
 		if (previewWindow != null)
 		{
 			previewWindow.document.body = VELVET_PreviewDocument.body;
-		}
-
-		// check total validity of component
-		ValidateComponent(ValidationStatus, submit, xml_status, js_status);
+		}		
 	}
 	
 	// attach above function to both editors
