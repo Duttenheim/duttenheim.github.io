@@ -50,8 +50,14 @@ function VELVET_RuntimeError(msg)
 
 //----------------------------------------------------------------------------
 /**
-	Use this function to change the state of the submit button. Send the class name used in the CSS to represent error text and accepted text respectively.
-	Also send the class name used for enabled/disabled buttons respectively
+	@param status 					The status state, must contain the status for the XML validation (.xml) and the status for the JS validation (.js).
+	@param button 					The submit button, will be enabled/disabled based on the status. Pass 'null' if no button is present.
+	@param xml_status 				The element which shows the XML validation status.
+	@param js_status 				The element which shows the JS validation status.
+	@param ok_class 				The style class used to display text which should be used for showing the validation has passed.
+	@param error_class 				-||- has failed.
+	@param button_enabled_class 	The style used for the button if interaction is enabled.
+	@param button_disabled_class 	-||- if interaction is disabled.
 */
 function ValidateComponent(status, button, xml_status, js_status, ok_class, error_class, button_enabled_class, button_disabled_class)
 {

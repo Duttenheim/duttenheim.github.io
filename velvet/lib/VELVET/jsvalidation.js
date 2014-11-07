@@ -1,5 +1,9 @@
 //----------------------------------------------------------------------------
 /**
+	@param contents 		The text contents of the JavaScript section
+	@param editor 			The JavaScript editor object
+	@param requirements		The XML requirements object, should be of type Requirements
+	
 	This function evaluates the JS using the special semantics. 
 	In actuality, it's rather simple, find the make function, count the number of arguments, if they match we are good!
 */

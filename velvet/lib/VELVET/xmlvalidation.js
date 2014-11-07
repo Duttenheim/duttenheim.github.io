@@ -17,6 +17,9 @@ var XMLTagBits =
 
 //----------------------------------------------------------------------------
 /**
+	@param contents 		The contents of the XML section
+	@param editor			The XML editor
+	@param requirements		The XML requirements object, should be of type Requirements
 	Main function for XML validation
 */
 function ValidateXML(contents, editor, requirements)
