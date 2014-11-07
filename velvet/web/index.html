@@ -98,8 +98,19 @@ function make_NewComponent (id, env) \n\
 		{
 			// create a new window and set its contents to be from the preview document
 			previewWindow = window.open("", "", "width=512, height=512, location=no, menubar=no, toolbar=no, status=no");
-			previewWindow.onbeforeunload = function() { previewWindow = null; }
-			previewWindow.addEventListener('load', function(){ previewWindow.document.body = VELVET_PreviewDocument.body; }(), true);			
+			previewWindow.onbeforeunload = function() 
+			{ 
+				// hax, but we need to bump the reference count of body by saving it in a local variable and reassigning it to our document
+				var body = previewWindow.document.body;
+				previewWindow = null; 
+				VELVET_PreviewDocument.body = body;
+			}
+			previewWindow.addEventListener('load', function()
+			{ 
+				previewWindow.document.title = "VELVET UI Preview";
+				previewWindow.document.body = VELVET_PreviewDocument.body; 				
+			}(), 
+			true);			
 		}
 		previewWindow.focus();
 	}
