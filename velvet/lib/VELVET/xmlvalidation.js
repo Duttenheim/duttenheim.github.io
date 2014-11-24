@@ -1,3 +1,7 @@
+
+// declare a global variable containing all accepted types
+var SATIN_Types = ['Bool', 'Int', 'String', 'Char', 'Float', '[Bool]', '[Int]', '[String]', '[Char]', '[Float]'];
+
 //----------------------------------------------------------------------------
 /**
 */
@@ -181,18 +185,10 @@ function ValidateXML(contents, editor, requirements)
 			for (var j = 0; j < apielems.length; j++)
 			{
 				var apielem = apielems[j];
-				if (apielem.tagName == "script")
+				if (apielem.tagName != "script")
 				{
-					var src = apielem.GetAttribute("src");
-					if (src == null)
-					{
-						VELVET_Error(elem.row + apielem.row, editor, "<script> tag must define attribute 'src'. If the script doesn't need an external source, just put the JavaScript code here.");
-						return false;
-					}
-					else
-					{
-						requirements.apis.push(src);
-					}
+					VELVET_Error(elem.row + apielem.row, editor, "<apis> APIs may only list <script> tags.");
+					return false
 				}
 			}
 			
@@ -352,9 +348,9 @@ function ValidateParam(element, editor, requirements)
 	}
 	else
 	{
-		if (type != "Bool" && type != "Int" && type != "String" && type != "Float")
+		if (!ValidateType(type, SATIN_Types))
 		{
-			VELVET_Error(element.row, editor, "<param> must use a defined type (Bool, Int, String, Float)");
+			VELVET_Error(element.row, editor, "<param> must use a defined type");
 			return false;		
 		}
 	}
@@ -424,9 +420,7 @@ function ValidateProvides(element, editor, requirements)
 	return true;
 }
 
-
 var invalidwords = " abort action after array before case class data default deriving do else elsif forall if import instance in let module new of private raise request result send struct then self typeclass uniarray use where ";
-var SATIN_Types = ['Bool', 'Int', 'String', 'Char', 'Float', '[Bool]', '[Int]', '[String]', '[Char]', '[Float]'];
 //----------------------------------------------------------------------------
 /**
 	TODO:
