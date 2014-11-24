@@ -1,6 +1,6 @@
 
 // declare a global variable containing all accepted types
-var SATIN_Types = ['Bool', 'Int', 'String', 'Char', 'Float', '[Bool]', '[Int]', '[String]', '[Char]', '[Float]'];
+var SATIN_Types = ['Bool', 'Int', 'String', 'Char', 'Float'];
 
 //----------------------------------------------------------------------------
 /**
@@ -187,7 +187,7 @@ function ValidateXML(contents, editor, requirements)
 				var apielem = apielems[j];
 				if (apielem.tagName != "script")
 				{
-					VELVET_Error(elem.row + apielem.row, editor, "<apis> may only list <script> sub tags.");
+					VELVET_Error(elem.row + apielem.row, editor, "<apis> may only list <script> sub tags");
 					return false
 				}
 			}

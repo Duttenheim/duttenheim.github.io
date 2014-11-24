@@ -134,8 +134,10 @@ function ValidateType(type, allowedtypes)
 {
 	for (var i = 0; i < allowedtypes.length; i++)
 	{
-		var allowedtype = allowedtypes[i];
-		if (type == allowedtype) return true;
+		var allowedType = allowedtypes[i];
+		var allowedTypeArray = "[" + allowedType + "]";
+		if 		(type == allowedType) 		return true;
+		else if (type == allowedTypeArray) 	return true;
 	}
 	return false;
 }
