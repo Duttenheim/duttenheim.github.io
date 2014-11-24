@@ -187,7 +187,7 @@ function ValidateXML(contents, editor, requirements)
 				var apielem = apielems[j];
 				if (apielem.tagName != "script")
 				{
-					VELVET_Error(elem.row + apielem.row, editor, "<apis> APIs may only list <script> tags.");
+					VELVET_Error(elem.row + apielem.row, editor, "<apis> may only list <script> sub tags.");
 					return false
 				}
 			}
