@@ -8,7 +8,7 @@
 <body>
 
 <!-- top menu bar -->
-<div style="float:center; width:98%; border: 1px solid black; border-radius: 3px; margin: 1% 1%">
+<div style="float:center; width:98%; border: 1px solid black; border-radius: 3px; margin: 1% 1%" class="default">
 	<div id="switches-div" style="margin: 10px" align="right">
 	<button class="button-enabled">Cost</button>
 	<button class="button-enabled">Heat</button>
@@ -19,7 +19,7 @@
 </div>
 
 <!-- left menu bar -->
-<div style="float:left; width:10%; border: 1px solid black; border-radius: 3px; margin: 0 1%;" id="input-div">
+<div style="float:left; width:10%; border: 1px solid black; border-radius: 3px; margin: 0 1%;" id="input-div" class="default">
 	<div id="device-div" style="margin: 10px">
 	Devices<br>
 
@@ -113,9 +113,15 @@
 		]);
 
 		// Set chart options
-		var options = {'title':'How much pizza i ate last night',
+		var options = {'title':'How much pizza I ate last night',
 					   'width':1024,
-					   'height':300};
+					   'height':768,
+					   'backgroundColor':'#333333',
+					   'legendTextStyle':
+					   {'color':'#FFFFFF'},					   
+					   'titleTextStyle':
+					   {'color':'#FFFFFF'},					   
+					   'is3D': true};
 
 		// Instantiate and draw our chart, passing in some options.
 		var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
