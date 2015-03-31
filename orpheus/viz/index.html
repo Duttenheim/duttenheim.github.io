@@ -1,0 +1,127 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+<body>
+
+<!-- top menu bar -->
+<div style="float:center; width:98%; border: 1px solid black; border-radius: 3px; margin: 1% 1%">
+	<div id="switches-div" style="margin: 10px" align="right">
+	<button class="button-enabled">Cost</button>
+	<button class="button-enabled">Heat</button>
+	<button class="button-enabled">Electricity produced</button>
+	<button class="button-enabled">Electricity sold</button>
+	<button class="button-enabled">Electricity bought</button>
+	</div>
+</div>
+
+<!-- left menu bar -->
+<div style="float:left; width:10%; border: 1px solid black; border-radius: 3px; margin: 0 1%;" id="input-div">
+	<div id="device-div" style="margin: 10px">
+	Devices<br>
+
+	</div>
+	<hr>
+	
+	<div id="electric-price-div"  style="margin: 10px">
+	Electricity price
+	</div>
+	<hr>
+	
+	<div id="control-div"  style="margin: 10px">
+	Control
+	</div>
+</div>
+
+<!-- graph visualization div -->
+<div style="float:center; width:75%; margin: 1% auto;" align="center">
+	<div id="chart_div"></div>
+</div>
+</body>
+
+<script type="text/javascript">
+
+	devices = ["77MW", "77 + 72MW", "77 + 72 + 72MW"];
+	
+	// get the left tab and add the devices to the list 
+	var deviceList = document.getElementById("device-div");
+	
+	for (i = 0; i < devices.length; i++)
+	{
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "width: 100%");
+		button.setAttribute("id", devices[i]);
+		button.innerHTML = devices[i];
+		deviceList.appendChild(button);
+	}
+	
+	electricity = ["High", "Low"];
+	
+	// get the electricity price list
+	var electricityPriceList = document.getElementById("electric-price-div");
+	
+	for (i = 0; i < electricity.length; i++)
+	{
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "width: 100%");
+		button.setAttribute("id", electricity[i]);
+		button.innerHTML = electricity[i];
+		electricityPriceList.appendChild(button);
+	}
+	
+	control = ["Best cost", "Best oil"];
+	
+	// get the control list
+	var controlList = document.getElementById("control-div");
+	
+	for (i = 0; i < control.length; i++)
+	{
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "width: 100%");
+		button.setAttribute("id", control[i]);
+		button.innerHTML = control[i];
+		controlList.appendChild(button);
+	}
+	
+	// Load the Visualization API and the piechart package.
+	google.load('visualization', '1.0', {'packages':['corechart']});
+
+	// Set a callback to run when the Google Visualization API is loaded.
+	google.setOnLoadCallback(drawChart);
+
+	// Callback that creates and populates a data table,
+	// instantiates the pie chart, passes in the data and
+	// draws it.
+	function drawChart() {
+
+		// Create the data table.
+		var data = new google.visualization.DataTable();
+		data.addColumn('string', 'Topping');
+		data.addColumn('number', 'Slices');
+		data.addRows([
+		  ['Mushrooms', 3],
+		  ['Onions', 1],
+		  ['Olives', 1],
+		  ['Zucchini', 1],
+		  ['Pepperoni', 2]
+		]);
+
+		// Set chart options
+		var options = {'title':'How much pizza i ate last night',
+					   'width':1024,
+					   'height':300};
+
+		// Instantiate and draw our chart, passing in some options.
+		var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+		chart.draw(data, options);
+	}
+</script>
+
+
+</html>
