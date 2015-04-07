@@ -4,6 +4,11 @@
 </head>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript" src="lib/criteria.js"></script>
+<script type="text/javascript" src="lib/dataevaluator.js"></script>
+<script type="text/javascript" src="lib/visualizer.js"></script>
+<script type="text/javascript" src="lib/datacontainer.js"></script>
+
 
 <body>
 
@@ -20,6 +25,8 @@
 
 <!-- left menu bar -->
 <div style="float:left; width:10%; border: 1px solid black; border-radius: 3px; margin: 0 1%;" id="input-div" class="default">
+	<p align="center" style="font-size: 25pt">Criteria</p>
+	<!--
 	<div id="device-div" style="margin: 10px">
 	Devices<br>
 
@@ -34,19 +41,84 @@
 	<div id="control-div"  style="margin: 10px">
 	Control
 	</div>
+	-->
 </div>
 
 <!-- graph visualization div -->
 <div style="float:center; width:75%; margin: 1% auto;" align="center">
-	<div id="chart_div"></div>
+	<div id="chart-div"></div>
 </div>
 </body>
 
 <script type="text/javascript">
 
-	devices = ["77MW", "77 + 72MW", "77 + 72 + 72MW"];
+	// Load the Visualization API and the piechart package.
+	google.load('visualization', '1.0', {'packages':['corechart']});
+	google.setOnLoadCallback(work);
+	
+	function work()
+	{
+		var visualizer = new Visualizer("input-div", "chart-div");
+		visualizer.Setup("Test", "mindre test", 1024, 768);
+		visualizer.SetupIndexColumn("number", "Day");
+		visualizer.SetupVerticalHeader("Consumption");
+		
+		visualizer.BeginCriteria("Devices");
+		var criteria = new Criteria("77MW", "number");
+		criteria.AddDataPoint([1, 55]);
+		criteria.AddDataPoint([2, 77]);
+		criteria.AddDataPoint([3, 51]);
+		criteria.AddDataPoint([4, 12]);
+		visualizer.AddCriteria(criteria);
+		
+		var criteria1 = new Criteria("77 + 72MW", "number");
+		criteria1.AddDataPoint([5, 413]);
+		criteria1.AddDataPoint([6, 677]);
+		criteria1.AddDataPoint([7, 416]);
+		criteria1.AddDataPoint([8, 734]);
+		visualizer.AddCriteria(criteria1);
+		
+		var criteria2 = new Criteria("77 + 72 + 72MW", "number");
+		criteria2.AddDataPoint([9, 87]);
+		criteria2.AddDataPoint([10, 36]);
+		criteria2.AddDataPoint([11, 52]);
+		criteria2.AddDataPoint([12, 486]);
+		criteria2.AddDataPoint([13, 87]);
+		criteria2.AddDataPoint([14, 36]);
+		criteria2.AddDataPoint([15, 52]);
+		criteria2.AddDataPoint([16, 486]);
+		criteria2.AddDataPoint([17, 87]);
+		criteria2.AddDataPoint([18, 36]);
+		criteria2.AddDataPoint([19, 52]);
+		criteria2.AddDataPoint([20, 486]);
+		criteria2.AddDataPoint([21, 87]);
+		criteria2.AddDataPoint([22, 36]);
+		criteria2.AddDataPoint([23, 52]);
+		criteria2.AddDataPoint([24, 486]);
+		visualizer.AddCriteria(criteria2);
+		//visualizer.AddCriteria(new Criteria("77MW"));
+		//visualizer.AddCriteria(new Criteria("77 + 72MW"));
+		//visualizer.AddCriteria(new Criteria("77 + 72 + 72MW"));
+		visualizer.EndCriteria();
+		
+		//visualizer.BeginCriteria("Electricity");
+		//visualizer.AddCriteria(new Criteria("High"));
+		//visualizer.AddCriteria(new Criteria("Low"));
+		//visualizer.EndCriteria();
+		
+		//visualizer.BeginCriteria("Control");
+		//visualizer.AddCriteria(new Criteria("Best cost"));
+		//visualizer.AddCriteria(new Criteria("Best oil"));
+		//visualizer.EndCriteria();
+		
+		visualizer.Draw();
+	}
+	
+	
+	//visualizer.Debug();
 	
 	// get the left tab and add the devices to the list 
+	/*
 	var deviceList = document.getElementById("device-div");
 	
 	for (i = 0; i < devices.length; i++)
@@ -55,11 +127,11 @@
 		button.setAttribute("class", "button-enabled");
 		button.setAttribute("style", "width: 100%");
 		button.setAttribute("id", devices[i]);
-		button.innerHTML = devices[i];
+		button.innerHTML = devices[i].name;
 		deviceList.appendChild(button);
 	}
 	
-	electricity = ["High", "Low"];
+	electricity = [new Criteria("High"), new Criteria("Low")];
 	
 	// get the electricity price list
 	var electricityPriceList = document.getElementById("electric-price-div");
@@ -70,11 +142,11 @@
 		button.setAttribute("class", "button-enabled");
 		button.setAttribute("style", "width: 100%");
 		button.setAttribute("id", electricity[i]);
-		button.innerHTML = electricity[i];
+		button.innerHTML = electricity[i].name;
 		electricityPriceList.appendChild(button);
 	}
 	
-	control = ["Best cost", "Best oil"];
+	control = [new Criteria("Best cost"), new Criteria("Best oil")];
 	
 	// get the control list
 	var controlList = document.getElementById("control-div");
@@ -85,9 +157,10 @@
 		button.setAttribute("class", "button-enabled");
 		button.setAttribute("style", "width: 100%");
 		button.setAttribute("id", control[i]);
-		button.innerHTML = control[i];
+		button.innerHTML = control[i].name;
 		controlList.appendChild(button);
 	}
+	
 	
 	// Load the Visualization API and the piechart package.
 	google.load('visualization', '1.0', {'packages':['corechart']});
@@ -113,7 +186,9 @@
 		]);
 
 		// Set chart options
-		var options = {'title':'How much pizza I ate last night',
+		var options = {
+						'title':'How much pizza I ate last night',
+						'subtitle':'Much pizza',
 					   'width':1024,
 					   'height':768,
 					   'backgroundColor':'#333333',
@@ -124,9 +199,10 @@
 					   'is3D': true};
 
 		// Instantiate and draw our chart, passing in some options.
-		var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+		var chart = new google.visualization.PieChart(document.getElementById('chart-div'));
 		chart.draw(data, options);
 	}
+	*/
 </script>
 
 
