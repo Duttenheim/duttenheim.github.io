@@ -5,6 +5,8 @@
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript" src="lib/criteria.js"></script>
+<script type="text/javascript" src="lib/serie.js"></script>
+<script type="text/javascript" src="lib/switch.js"></script>
 <script type="text/javascript" src="lib/dataevaluator.js"></script>
 <script type="text/javascript" src="lib/visualizer.js"></script>
 <script type="text/javascript" src="lib/datacontainer.js"></script>
@@ -15,11 +17,6 @@
 <!-- top menu bar -->
 <div style="float:center; width:98%; border: 1px solid black; border-radius: 3px; margin: 1% 1%" class="default">
 	<div id="switches-div" style="margin: 10px" align="right">
-	<button class="button-enabled">Cost</button>
-	<button class="button-enabled">Heat</button>
-	<button class="button-enabled">Electricity produced</button>
-	<button class="button-enabled">Electricity sold</button>
-	<button class="button-enabled">Electricity bought</button>
 	</div>
 </div>
 
@@ -48,68 +45,111 @@
 <div style="float:center; width:75%; margin: 1% auto;" align="center">
 	<div id="chart-div"></div>
 </div>
+
+<div style="float:center; width: 100%; margin: auto;" align="center" id="chart-types-div">
+<h2>Chart types</h2> <br>
+</div>
 </body>
 
 <script type="text/javascript">
 
 	// Load the Visualization API and the piechart package.
 	google.load('visualization', '1.0', {'packages':['corechart']});
+	google.load('visualization', '1.1', {'packages':['line']});
 	google.setOnLoadCallback(work);
 	
 	function work()
 	{
-		var visualizer = new Visualizer("input-div", "chart-div");
-		visualizer.Setup("Test", "mindre test", 1024, 768);
+		var visualizer = new Visualizer("input-div", "chart-div", "switches-div");
+		visualizer.Setup("Demo", "Sample text", "100%", 768);
 		visualizer.SetupIndexColumn("number", "Day");
 		visualizer.SetupVerticalHeader("Consumption");
+		visualizer.SetGraphMode(SupportedCharts.AREA);
+		
+		var chartTypesDiv = document.getElementById("chart-types-div");
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "margin-left: 10px; margin-right: 10px");
+		button.onclick = function() { visualizer.SetGraphMode(SupportedCharts.LINE); }
+		button.innerHTML = "Line";
+		chartTypesDiv.appendChild(button);
+		
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "margin-left: 10px; margin-right: 10px");
+		button.onclick = function() { visualizer.SetGraphMode(SupportedCharts.AREA); }
+		button.innerHTML = "Area";
+		chartTypesDiv.appendChild(button);
+		
+		var button = document.createElement("button");
+		button.setAttribute("class", "button-enabled");
+		button.setAttribute("style", "margin-left: 10px; margin-right: 10px");
+		button.onclick = function() { visualizer.SetGraphMode(SupportedCharts.BAR); }
+		button.innerHTML = "Bar";
+		chartTypesDiv.appendChild(button);
+		
+		var costSwitch = new DataSwitch("Cost");
+		visualizer.AddDataSwitch(costSwitch);
+		
+		var heatSwitch = new DataSwitch("Heat");
+		visualizer.AddDataSwitch(heatSwitch);
+		
+		var elProSwitch = new DataSwitch("Electricity produced");
+		visualizer.AddDataSwitch(elProSwitch);
+		
+		var elSoldSwitch = new DataSwitch("Electricity sold");
+		visualizer.AddDataSwitch(elSoldSwitch);
+		
+		var elBougSwitch = new DataSwitch("Electricity bought");
+		visualizer.AddDataSwitch(elBougSwitch);
+		
+		var serie = new Serie("Cost", "number", costSwitch);
+		serie.AddDataPoint([1, 55]);
+		serie.AddDataPoint([2, 77]);
+		serie.AddDataPoint([3, 51]);
+		serie.AddDataPoint([4, 12]);
+		var criterionChain = MakeCriterionChain(["77MW", "High", "Best cost"], [serie]);
+		visualizer.AddCriterionChain(criterionChain);
+		
+		var serie1 = new Serie("Cost", "number", costSwitch);
+		serie1.AddDataPoint([5, 413]);
+		serie1.AddDataPoint([6, 677]);
+		serie1.AddDataPoint([7, 416]);
+		serie1.AddDataPoint([8, 734]);
+		var serie2 = new Serie("Heat", "number", heatSwitch);
+		serie2.AddDataPoint([5, 4]);
+		serie2.AddDataPoint([6, 5]);
+		serie2.AddDataPoint([7, 1]);
+		serie2.AddDataPoint([8, 50]);
+		serie2.AddDataPoint([9, 20]);
+		serie2.AddDataPoint([10, 21]);
+		serie2.AddDataPoint([11, 22]);
+		var criterionChain = MakeCriterionChain(["77 + 72MW", "Low", "Best cost"], [serie1, serie2]);
+		visualizer.AddCriterionChain(criterionChain);
+		
+		var serie = new Serie("Cost", "number", costSwitch);
+		serie.AddDataPoint([9, 87]);
+		serie.AddDataPoint([10, 36]);
+		serie.AddDataPoint([11, 52]);
+		serie.AddDataPoint([12, 486]);
+		var criterionChain = MakeCriterionChain(["77 + 72 + 72MW", "High", "Best oil"], [serie]);
+		visualizer.AddCriterionChain(criterionChain);
 		
 		visualizer.BeginCriteria("Devices");
-		var criteria = new Criterion("77MW", "number");
-		criteria.AddDataPoint([1, 55]);
-		criteria.AddDataPoint([2, 77]);
-		criteria.AddDataPoint([3, 51]);
-		criteria.AddDataPoint([4, 12]);
-		visualizer.AddCriterion(criteria);
-		
-		var criteria1 = new Criterion("77 + 72MW", "number");
-		criteria1.AddDataPoint([5, 413]);
-		criteria1.AddDataPoint([6, 677]);
-		criteria1.AddDataPoint([7, 416]);
-		criteria1.AddDataPoint([8, 734]);
-		visualizer.AddCriterion(criteria1);
-		
-		var criteria2 = new Criterion("77 + 72 + 72MW", "number");
-		criteria2.AddDataPoint([9, 87]);
-		criteria2.AddDataPoint([10, 36]);
-		criteria2.AddDataPoint([11, 52]);
-		criteria2.AddDataPoint([12, 486]);
-		criteria2.AddDataPoint([13, 87]);
-		criteria2.AddDataPoint([14, 36]);
-		criteria2.AddDataPoint([15, 52]);
-		criteria2.AddDataPoint([16, 486]);
-		criteria2.AddDataPoint([17, 87]);
-		criteria2.AddDataPoint([18, 36]);
-		criteria2.AddDataPoint([19, 52]);
-		criteria2.AddDataPoint([20, 486]);
-		criteria2.AddDataPoint([21, 87]);
-		criteria2.AddDataPoint([22, 36]);
-		criteria2.AddDataPoint([23, 52]);
-		criteria2.AddDataPoint([24, 486]);
-		visualizer.AddCriterion(criteria2);
-		//visualizer.AddCriteria(new Criteria("77MW"));
-		//visualizer.AddCriteria(new Criteria("77 + 72MW"));
-		//visualizer.AddCriteria(new Criteria("77 + 72 + 72MW"));
+		visualizer.AddCriterion(new Criterion("77MW"));
+		visualizer.AddCriterion(new Criterion("77 + 72MW"));
+		visualizer.AddCriterion(new Criterion("77 + 72 + 72MW"));
 		visualizer.EndCriteria();
 		
-		//visualizer.BeginCriteria("Electricity");
-		//visualizer.AddCriteria(new Criteria("High"));
-		//visualizer.AddCriteria(new Criteria("Low"));
-		//visualizer.EndCriteria();
+		visualizer.BeginCriteria("Electricity");
+		visualizer.AddCriterion(new Criterion("High"));
+		visualizer.AddCriterion(new Criterion("Low"));
+		visualizer.EndCriteria();
 		
-		//visualizer.BeginCriteria("Control");
-		//visualizer.AddCriteria(new Criteria("Best cost"));
-		//visualizer.AddCriteria(new Criteria("Best oil"));
-		//visualizer.EndCriteria();
+		visualizer.BeginCriteria("Control");
+		visualizer.AddCriterion(new Criterion("Best cost"));
+		visualizer.AddCriterion(new Criterion("Best oil"));
+		visualizer.EndCriteria();
 		
 		visualizer.Draw();
 	}

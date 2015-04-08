@@ -2,50 +2,36 @@
 /**
 	Constructor for criteria
 */
-function Criterion(name, type)
+function Criterion(name)
 {
 	this.name = name;
-	this.type = type;
 	this.enabled = false;
-	this.data = [];
-	
-	this.children = [];
 	this.next = null;
 	this.series = [];
 }
 
 //----------------------------------------
 /**
+	Make a chain of criterion with a data series in the end
+	@param names is a list of names of the criteria
+	@param data is a list of data series to be appended at the end of the chain
 */
-Criterion.prototype.AddDataPoint = function(data)
+function MakeCriterionChain(names, data)
 {
-	this.data.push(data);
-}
-
-//----------------------------------------
-/**
-	Adds a criteria to the criteria chain 
-*/
-Criterion.prototype.PushCriterion = function(criteria)
-{
-	if (this.serie != null)
+	var criteria = [];
+	var criterion;
+	for (i = 0; i < names.length; i++)
 	{
-		throw "Can only chain criteria if we don't have any data attached to this criteria";
+		criterion = new Criterion(names[i])
+		if (criteria.length > 0) criteria[criteria.length-1].next = criterion;
+		criteria.push(criterion);
 	}
-	this.children.push(criteria);
-}
-
-//----------------------------------------
-/**
-	Adds a criteria to the criteria chain 
-*/
-Criterion.prototype.AttachSerie = function(serie)
-{
-	if (this.children.length != 0)
+	
+	for (i = 0; i < data.length; i++)
 	{
-		throw "Can not attach a serie to a criteria if we have another criteria in the chain";
+		criterion.series.push(data[i]);
 	}
-	this.series.push(serie);
+	return criteria[0];
 }
 
 //----------------------------------------
@@ -54,19 +40,5 @@ Criterion.prototype.AttachSerie = function(serie)
 */
 Criterion.prototype.Matches = function(criterion)
 {
-	var list = criterion;
-	var result = false;
-	for (i = 0; i < list.length; i++)
-	{
-		var crit = list[i];
-		if (crit.name == this.name)
-		{
-			// woop, criteria found, remove from the match list and break loop
-			list = list.slice(i, 1);
-			result = true;
-			break;
-		}
-	}
-	if (this.next != null) result = this.next.Matches(list);
-	return result;
+	return this.name == criterion.name;
 }
