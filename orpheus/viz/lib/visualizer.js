@@ -62,8 +62,10 @@ Visualizer.prototype.BeginCriteria = function(name)
 {
 	var div = document.createElement("div");
 	div.id = name;
-	div.style.margin = 10;
+	//div.style.margin = 10;
 	div.innerHTML = name;
+	//var br = document.createElement("br");
+	//div.appendChild(br);
 	this.criteriaContainer.appendChild(div);
 	
 	this.criteriaSection = div;
@@ -86,8 +88,8 @@ Visualizer.prototype.AddCriterion = function(criterion)
 	}
 	
 	var button = document.createElement("button");
+	button.setAttribute("style", "width: 95%");
 	button.setAttribute("class", "button-enabled");
-	button.setAttribute("style", "width: 100%");
 	button.setAttribute("id", criterion.name);
 	button.innerHTML = criterion.name;
 	var slot = this.criterionSlots.length - 1;
@@ -98,6 +100,9 @@ Visualizer.prototype.AddCriterion = function(criterion)
 	this.criteriaSection.appendChild(button);
 	
 	this.criteria[this.criteria.length] = criterion;
+	
+	//var num = 0;
+	//window.setInterval(function() {button.setAttribute("style", "width: " + num + "%"); num += 1; }, 100);
 }
 
 //----------------------------------------
@@ -166,7 +171,7 @@ Visualizer.prototype.AddDataSwitch = function(dataSwitch)
 {
 	var button = document.createElement("button");
 	button.setAttribute("class", "button-enabled");
-	button.setAttribute("style", "margin-left: 5px; margin-right: 5px");
+	//button.setAttribute("style", "margin-left: 5px; margin-right: 5px; margin-top: 5px; margin-bottom: 5px");
 	button.setAttribute("id", dataSwitch.name);
 	button.innerHTML = dataSwitch.name;
 	button.onclick = function() { this.OnSwitchSelected(dataSwitch, button); }.bind(this);
@@ -324,25 +329,28 @@ Visualizer.prototype.Draw = function()
 			data.addRow(row);
 		}
 		
-		// clear container and draw chart
-		var chart;
-		switch (this.chartMode)
+		if (activeSeries.length > 0)
 		{
-			case SupportedCharts.LINE:
-				chart = new google.visualization.LineChart(this.graphContainer);
-				break;
-			case SupportedCharts.AREA:
-				chart = new google.visualization.AreaChart(this.graphContainer);
-				break;
-			case SupportedCharts.PIE:
-				chart = new google.visualization.PieChart(this.graphContainer);
-				break;
-			case SupportedCharts.BAR:
-				chart = new google.visualization.BarChart(this.graphContainer);
-				break;
+			// clear container and draw chart
+			var chart;
+			switch (this.chartMode)
+			{
+				case SupportedCharts.LINE:
+					chart = new google.visualization.LineChart(this.graphContainer);
+					break;
+				case SupportedCharts.AREA:
+					chart = new google.visualization.AreaChart(this.graphContainer);
+					break;
+				case SupportedCharts.PIE:
+					chart = new google.visualization.PieChart(this.graphContainer);
+					break;
+				case SupportedCharts.BAR:
+					chart = new google.visualization.BarChart(this.graphContainer);
+					break;
+			}
+			
+			chart.draw(data, options);	
 		}
-		
-		chart.draw(data, options);
 	}	
 }
 
