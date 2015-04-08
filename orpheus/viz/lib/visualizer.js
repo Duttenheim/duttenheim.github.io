@@ -16,7 +16,9 @@ function Visualizer(criteriaContainerDiv, graphDiv)
 		throw "Chart div needs to be defined";
 	}
 	
-	this.criteria = []; 
+	this.criteria = [];
+	this.criterionSlots = [];
+	this.series = []; 
 }
 
 //----------------------------------------
@@ -32,13 +34,14 @@ Visualizer.prototype.BeginCriteria = function(name)
 	this.criteriaContainer.appendChild(div);
 	this.criteriaSection = div;
 	this.currentCriteria = name;
+	this.criterionSlots.push(null);
 }
 
 //----------------------------------------
 /**
 	Adds a new criteria to the visualiser, which will pop up in the left criteria bar.
 */
-Visualizer.prototype.AddCriteria = function(criteria)
+Visualizer.prototype.AddCriterion = function(criteria)
 {
 	if (this.currentCriteria == null || this.criteriaSection == null)
 	{
@@ -50,7 +53,7 @@ Visualizer.prototype.AddCriteria = function(criteria)
 	button.setAttribute("style", "width: 100%");
 	button.setAttribute("id", criteria.name);
 	button.innerHTML = criteria.name;
-	button.onclick = function() { this.OnCriteriaSelected(criteria); }.bind(this);
+	button.onclick = function() { this.OnCriterionSelected(criteria, this.criterionSlots.length - 1); }.bind(this);
 	this.criteriaSection.appendChild(button);
 	
 	this.criteria[this.criteria.length] = criteria;
@@ -74,9 +77,18 @@ Visualizer.prototype.EndCriteria = function()
 /**
 	Handle a data criteria being clicked
 */
-Visualizer.prototype.OnCriteriaSelected = function(criteria)
+Visualizer.prototype.OnCriterionSelected = function(criterion, criterionSlot)
 {
-	criteria.enabled = !criteria.enabled;
+	if (criterion.enabled && this.criterionSlots[criterionSlot] == criterion)
+	{
+		this.criterionSlots[criterionSlot] = null;
+	}
+	else
+	{
+		this.criterionSlots[criterionSlot] = criterion;
+	}
+	
+	criterion.enabled = !criterion.enabled;
 	this.Draw();
 }
 
@@ -159,7 +171,7 @@ Visualizer.prototype.Draw = function()
 	// go through the longest row (which will also be inclusive of all values of all series (criteria)
 	for (i = 0; i < longestRow; i++)
 	{
-		// create a new array with criteria size + 1 for the header column (the new Array is ill adviced, but it's exactly what we want here)
+		// create a new array with criteria size + 1 for the header column (the new Array is ill advised, but it's exactly what we want here)
 		var row = new Array(activeCriteria.length + 1);
 		for (j = 0; j < activeCriteria.length; j++)
 		{
