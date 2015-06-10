@@ -1,27 +1,34 @@
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="../exts/jquery.gridster.css"></link>
 </head>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript" src="lib/criteria.js"></script>
 <script type="text/javascript" src="lib/serie.js"></script>
 <script type="text/javascript" src="lib/switch.js"></script>
-<script type="text/javascript" src="lib/dataevaluator.js"></script>
 <script type="text/javascript" src="lib/visualizer.js"></script>
 <script type="text/javascript" src="lib/datacontainer.js"></script>
-
+<script type="text/javascript" src="lib/scenario.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>    
+<!--<script src="../exts/tiles.min.js"></script>-->
+<script src="../exts/jquery.gridster.min.js"></script>
 
 <body>
 
 <!-- top menu bar -->
+<!--
 <div style="float:center; width:100%;" class="default">
 	<div id="switches-div" style="margin: 10px" align="right">
 		<div style="float: left; font-size: 15pt; margin-top: 5px; margin-bottom: 5px">Data</div>
 	</div>
 </div>
+-->
 
 <!-- left menu bar -->
+<!--
 <div style="float: left; width: 10%; margin-top: 1%; margin-left: 0;" align="center">
 	<div id="input-div" class="default">
 		<p style="font-size: 15pt">Criteria</p>
@@ -31,19 +38,86 @@
 		<div style="font-size: 15pt">Chart types</div> <br>
 	</div>
 </div>
+-->
+<div class="gridster" id="dashboard-div">
+	<ul></ul>
+</div>
 
 <!-- graph visualization div -->
-<div style="float:center; width:75%; margin: 1% auto;" align="center">
+<!--<div style="float:center; width:75%; margin: 1% auto;" align="center">
 	<div id="chart-div"></div>
 </div>
+-->
+<div style="float:center; width: 25%;" align="center">
+	<input type="file" value="Chose a file" id="scenario-input">
+</div>
+
 	
 </body>
 
 <script type="text/javascript">
-
 	// Load the Visualization API and the piechart package.
 	google.load('visualization', '1.0', {'packages':['corechart']});
-	google.load('visualization', '1.1', {'packages':['line']});
+	google.load('visualization', '1.2', {'packages':['line']});
+	google.setOnLoadCallback(work);
+	
+	var gridster;
+	function work()
+	{
+		gridster = $(".gridster > ul").gridster({
+		  widget_margins: [5, 5]
+		  //widget_base_dimensions: [100, 55]
+	  	}).data('gridster');	
+	  	
+		var scenarioInput = document.getElementById("scenario-input");
+		scenarioInput.addEventListener('change', function(e) 
+		{
+			if (scenarioInput.files.length > 0)
+			{
+				var scenario = new Scenario(scenarioInput.files[0]);
+				scenario.OnLoaded = function()
+				{
+					var widgets = [];
+					scenario.data.forEach(function(value, key)
+					{
+						var div = "<p align='center'>" + key + "</p>";
+						widgets.push(["<div class='default'>" + div + "</div>", 1, 1]);
+					});
+				
+					$.each(widgets, function(i, widget)
+					{
+						gridster.add_widget.apply(gridster, widget)
+					});
+				}
+			}
+		});
+		
+		var data = google.visualization.arrayToDataTable([
+		  ['Task', 'Hours per Day'],
+		  ['Work',     11],
+		  ['Eat',      2],
+		  ['Commute',  2],
+		  ['Watch TV', 2],
+		  ['Sleep',    7]
+		]);
+
+		var options = {
+				   backgroundColor: {fill: 'transparent'},
+				   chartArea: { backgroundColor:'#333333' },
+				   legendTextStyle:{'color':'#FFFFFF'},					   
+				   titleTextStyle:{'color':'#FFFFFF'},					   
+				   is3D: true
+		};
+	
+		var element = document.createElement("div");
+		chart = new google.visualization.PieChart(element);
+		chart.draw(data, options);
+		
+	}
+	/*
+	// Load the Visualization API and the piechart package.
+	google.load('visualization', '1.0', {'packages':['corechart']});
+	google.load('visualization', '1.2', {'packages':['line']});
 	google.setOnLoadCallback(work);
 	
 	function work()
@@ -53,6 +127,16 @@
 		visualizer.SetupIndexColumn("number", "Day");
 		visualizer.SetupVerticalHeader("Quantity");
 		visualizer.SetGraphMode(SupportedCharts.AREA);
+		
+		var scenarioInput = document.getElementById("scenario-input");
+		scenarioInput.addEventListener('change', function(e) 
+		{
+			if (scenarioInput.files.length > 0)
+			{
+				var scenario = new Scenario(scenarioInput.files[0]);
+				visualizer.SetupFromScenario(scenario);
+			}
+		});
 		
 		// Hmmm, find a better way to create the buttons which shows the supported graph types.
 		// Perhaps, also use data evaluation to determine which type of graph we might want?
@@ -154,7 +238,7 @@
 	
 	
 	//visualizer.Debug();
-	
+	*/
 	// get the left tab and add the devices to the list 
 	/*
 	var deviceList = document.getElementById("device-div");

@@ -356,6 +356,16 @@ Visualizer.prototype.Draw = function()
 
 //----------------------------------------
 /**
+	Set up the visualizer, data series and switches based on a scenario.
+	@param scenario is a successfully loaded scenario object.
+*/
+Visualizer.prototype.SetupFromScenario = function(scenario)
+{
+
+}
+
+//----------------------------------------
+/**
 */
 Visualizer.prototype.Debug = function()
 {

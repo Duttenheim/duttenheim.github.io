@@ -1,0 +1,42 @@
+<OrpheusCS>
+
+	<!--
+		This section contains any useful metadata to identify which scenario is being run.
+		This is mostly for Visualization, for example runName can be used as a title. We can add other stuff...
+		The generated CVS files (one per DataSource and OptimizedVariable) will be called csvExportPrefix+name+".csv" for example s1a1HP_Heb_out.csv
+	-->
+	<MetaData>
+		<Parameter name="runName" value="Scenario1 Alpha - highPrices blabla"/>
+		<Parameter name="csvExportPrefix" value="s1a1HP_"/>
+	</MetaData>
+
+	<!--
+		This section describes which CSV files are parsed and made available to the Optimizer, for example electricity prices, or heat demand, etc.
+		It also contains which values are being read at every timestep from the simulation tools via FMI.
+		Each DataSource results in an exported CSV file with the timeserie at the end of the scenario run.
+	-->	
+	<DataSources>
+		<DataSource name="LOAD_Electricity" type="csv" file="highPrice.csv"/>
+		<DataSource name="Heb_out" type="fmi"/>
+		<DataSource name="Hob_out" type="fmi"/>
+	</DataSources>
+	
+	<!--
+		This section is internal to the Optimizer and the only relevant thing to the Visualization is <OptimizedVariable> which gets exported by CSV like DataSources.
+	-->
+	<NLOPT>
+		<Parameter name="nlopt_algo" value="25"/>
+		<Parameter name="nlopt_constraintTolerance" value="1e-8"/>
+		<Parameter name="nlopt_relativeTolerance" value="1e-4"/>
+		
+		<OptimizedVariable name="X_Heb_out" min="0" fmi="Heb_out"/>
+		<OptimizedVariable name="X_Hob_out" min="0" init="456"/>
+	
+		<Objective formula="X_Hob_out"/>
+		
+		<Parameter name="testParam" value="2"/>
+		<Constraint formula="testParam * Hob_out[0] - Heb_out[-1] + X_Heb_out"/>
+		<Constraint formula="X_Hob_out * LOAD_Electricity[0]"/>
+	</NLOPT>
+
+</OrpheusCS>
