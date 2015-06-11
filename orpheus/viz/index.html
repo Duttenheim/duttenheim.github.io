@@ -19,13 +19,13 @@
 <body>
 
 <!-- top menu bar -->
-<!--
-<div style="float:center; width:100%;" class="default">
-	<div id="switches-div" style="margin: 10px" align="right">
-		<div style="float: left; font-size: 15pt; margin-top: 5px; margin-bottom: 5px">Data</div>
+
+<div style="float:center; width:100%; margin: 0px padding: 0px">
+	<div style="font-size: 35pt; text-shadow: 0 0 5px rgb(0,0,0), 0 0 10px rgb(0,0,0);" align="center">
+		OrPHEuS Dashboard
+		<hr>
 	</div>
 </div>
--->
 
 <!-- left menu bar -->
 <!--
@@ -39,19 +39,24 @@
 	</div>
 </div>
 -->
-<div class="gridster" id="dashboard-div">
-	<ul></ul>
+<div style="float: center; width: 100%; margin: auto;">
+	<div class="gridster" id="dashboard-div">
+		<ul></ul>
+		<ul></ul>
+		<ul></ul>
+		<ul></ul>
+	</div>
 </div>
 
 <!-- graph visualization div -->
 <!--<div style="float:center; width:75%; margin: 1% auto;" align="center">
 	<div id="chart-div"></div>
 </div>
--->
+
 <div style="float:center; width: 25%;" align="center">
 	<input type="file" value="Chose a file" id="scenario-input">
 </div>
-
+-->
 	
 </body>
 
@@ -61,25 +66,42 @@
 	google.load('visualization', '1.2', {'packages':['line']});
 	google.setOnLoadCallback(work);
 	
+	function MakeHttpObject()
+	{
+		try {return new XMLHttpRequest();}
+		catch (error) {}
+		try {return new ActiveXObject("Msxml2.XMLHTTP");}
+		catch (error) {}
+		try {return new ActiveXObject("Microsoft.XMLHTTP");}
+		catch (error) {}
+		throw new Error("Could not create HTTP request object.");
+	}
+	
 	var gridster;
 	function work()
 	{
 		gridster = $(".gridster > ul").gridster({
-		  widget_margins: [5, 5]
-		  //widget_base_dimensions: [100, 55]
+		  widget_margins: [5, 5],
+		  widget_base_dimensions: [200, 150]
 	  	}).data('gridster');	
 	  	
-		var scenarioInput = document.getElementById("scenario-input");
-		scenarioInput.addEventListener('change', function(e) 
+		var request = MakeHttpObject();
+		request.onreadystatechange = function()
 		{
-			if (scenarioInput.files.length > 0)
+			if (request.readyState == 4 && request.status == 200)
 			{
-				var scenario = new Scenario(scenarioInput.files[0]);
+				var scenario = new Scenario();
 				scenario.OnLoaded = function()
 				{
 					var widgets = [];
 					scenario.data.forEach(function(value, key)
 					{
+						var dataRequest = MakeHttpObject();
+						if (value.type == "csv")
+						{
+							dataRequest.open("GET", "http://duttenheim.github.io/orpheus/viz/data/" + value.src, true);
+							dataRequest.send(null);
+						}
 						var div = "<p align='center'>" + key + "</p>";
 						widgets.push(["<div class='default'>" + div + "</div>", 1, 1]);
 					});
@@ -89,9 +111,13 @@
 						gridster.add_widget.apply(gridster, widget)
 					});
 				}
+				scenario.LoadFromString(request.responseText);
 			}
-		});
+		}
 		
+		request.open("GET", "http://duttenheim.github.io/orpheus/viz/data/example.xml", true);
+		request.send(null);
+				
 		var data = google.visualization.arrayToDataTable([
 		  ['Task', 'Hours per Day'],
 		  ['Work',     11],

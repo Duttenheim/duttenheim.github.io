@@ -16,9 +16,9 @@
 		Each DataSource results in an exported CSV file with the timeserie at the end of the scenario run.
 	-->	
 	<DataSources>
-		<DataSource name="LOAD_Electricity" type="csv" file="highPrice.csv"/>
-		<DataSource name="Heb_out" type="fmi"/>
-		<DataSource name="Hob_out" type="fmi"/>
+		<DataSource name="LOAD_Electricity" type="csv" file="Hchp_out.csv"/>
+		<DataSource name="Heb_out" type="csv" file="HLOSS_grid.csv"/>
+		<DataSource name="Hob_out" type="csv" file="LOADH_consumer.csv"/>
 	</DataSources>
 	
 	<!--

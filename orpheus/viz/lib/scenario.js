@@ -6,6 +6,13 @@
 function Scenario(file)
 {
 	this.data = new Map();
+}
+
+//----------------------------------------
+/**
+*/
+Scenario.prototype.LoadFromFile = function(file)
+{
 	if (file)
 	{
 		var reader = new FileReader();
@@ -32,6 +39,27 @@ function Scenario(file)
 	else
 	{
 	
+	}
+}
+
+//----------------------------------------
+/**
+*/
+Scenario.prototype.LoadFromString = function(string)
+{
+	var parser = new DOMParser();
+	var document = parser.parseFromString(string, "text/xml");
+	if (document.documentElement.nodeName == "parsererror")
+	{
+		errStr = xmlDoc.documentElement.childNodes[0].nodeValue;
+		errStr = errStr.replace(/</g, "&lt;");
+		document.write(errStr);
+	}
+	else
+	{
+		// treat the file and load scenarios
+		this.Load(document);
+		this.OnLoaded();
 	}
 }
 
