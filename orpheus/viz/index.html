@@ -5,17 +5,13 @@
 </head>
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script type="text/javascript" src="lib/criteria.js"></script>
-<script type="text/javascript" src="lib/serie.js"></script>
-<script type="text/javascript" src="lib/switch.js"></script>
 <script type="text/javascript" src="lib/visualizer.js"></script>
-<script type="text/javascript" src="lib/datacontainer.js"></script>
 <script type="text/javascript" src="lib/scenario.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>    
 <!--<script src="../exts/tiles.min.js"></script>-->
 <script src="../exts/jquery.gridster.min.js"></script>
-
+<script src="../exts/jquery.csv-0.71.min.js"></script>
 <body>
 
 <!-- top menu bar -->
@@ -39,11 +35,8 @@
 	</div>
 </div>
 -->
-<div style="float: center; width: 100%; margin: auto;">
-	<div class="gridster" id="dashboard-div">
-		<ul></ul>
-		<ul></ul>
-		<ul></ul>
+<div style="width: 100%;">
+	<div class="gridster" style="margin: auto" id="dashboard-div">
 		<ul></ul>
 	</div>
 </div>
@@ -81,8 +74,9 @@
 	function work()
 	{
 		gridster = $(".gridster > ul").gridster({
-		  widget_margins: [5, 5],
-		  widget_base_dimensions: [200, 150]
+		  // padding here is .tile padding + 5 for some nice distance
+		  widget_margins: [15, 15]
+		  //widget_base_dimensions: [200, 150]
 	  	}).data('gridster');	
 	  	
 		var request = MakeHttpObject();
@@ -99,11 +93,15 @@
 						var dataRequest = MakeHttpObject();
 						if (value.type == "csv")
 						{
-							dataRequest.open("GET", "http://duttenheim.github.io/orpheus/viz/data/" + value.src, true);
+							dataRequest.open("GET", "http://duttenheim.github.io/orpheus/viz/data/" + value.src, false);
 							dataRequest.send(null);
+							var visualizer = new Visualizer();
+							visualizer.Load(dataRequest.responseText);
+							var graph = visualizer.CreateGraph(SupportedCharts.LINE);
+							
+							var div = "<div class='tile'>" + key + graph.innerHTML + "</div>";
+							widgets.push([div, 1, 1]);
 						}
-						var div = "<p align='center'>" + key + "</p>";
-						widgets.push(["<div class='default'>" + div + "</div>", 1, 1]);
 					});
 				
 					$.each(widgets, function(i, widget)
@@ -116,29 +114,7 @@
 		}
 		
 		request.open("GET", "http://duttenheim.github.io/orpheus/viz/data/example.xml", true);
-		request.send(null);
-				
-		var data = google.visualization.arrayToDataTable([
-		  ['Task', 'Hours per Day'],
-		  ['Work',     11],
-		  ['Eat',      2],
-		  ['Commute',  2],
-		  ['Watch TV', 2],
-		  ['Sleep',    7]
-		]);
-
-		var options = {
-				   backgroundColor: {fill: 'transparent'},
-				   chartArea: { backgroundColor:'#333333' },
-				   legendTextStyle:{'color':'#FFFFFF'},					   
-				   titleTextStyle:{'color':'#FFFFFF'},					   
-				   is3D: true
-		};
-	
-		var element = document.createElement("div");
-		chart = new google.visualization.PieChart(element);
-		chart.draw(data, options);
-		
+		request.send(null);		
 	}
 	/*
 	// Load the Visualization API and the piechart package.
